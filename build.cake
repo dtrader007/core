@@ -92,7 +92,6 @@ Task("Test-C#")
     }
 });
 
-using System.Reflection;
 
 Task("Pack-NuGet")
 	.IsDependentOn("Test-C#")
@@ -101,14 +100,7 @@ Task("Pack-NuGet")
 {
 	string workingDirectory = setupContext.Environment.WorkingDirectory.ToString();
 
-	string assemblyPath = System.IO.Path.Combine(workingDirectory, "src", "Cmdty.Core.Trees", "bin", configuration, "net45", "Cmdty.Core.Trees.dll");
-	Information(assemblyPath);
-	
-	Assembly assembly = Assembly.LoadFrom(assemblyPath);
-
-	string productVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(assembly.Location).ProductVersion;
-
-	Information(productVersion);
+	string productVersion = GetAssemblyVersion(configuration, workingDirectory);
 
 	var nuGetPackSettings = new NuGetPackSettings
 	{
@@ -123,13 +115,15 @@ Task("Pack-NuGet")
 });	
 
 
+using System.Reflection;
 private string GetAssemblyVersion(string configuration, string workingDirectory)
 {
+	// TODO find better way of doing this!
 	string assemblyPath = System.IO.Path.Combine(workingDirectory, "src", "Cmdty.Core.Trees", "bin", configuration, "net45", "Cmdty.Core.Trees.dll");
-	System.Reflection.Assembly assembly = System.Reflection.Assembly.Load(assemblyPath);
-	return "";
+	Assembly assembly = Assembly.LoadFrom(assemblyPath);
+	string productVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(assembly.Location).ProductVersion;
+	return productVersion;
 }
-
 
 Task("Default")
 	.IsDependentOn("Pack-NuGet");
