@@ -25,13 +25,13 @@
 		</dependencies>
 	</metadata>
 	<files>
-		<file src="src\Cmdty.Core.Trees\bin\Release\net45\Cmdty.Core.Trees.dll" target="lib\net45" />
-		<file src="src\Cmdty.Core.Trees\bin\Release\net45\Cmdty.Core.Trees.pdb" target="lib\net45" />
-		<file src="src\Cmdty.Core.Simulation\bin\Release\net45\Cmdty.Core.Simulation.dll" target="lib\net45" />
-		<file src="src\Cmdty.Core.Simulation\bin\Release\net45\Cmdty.Core.Simulation.pdb" target="lib\net45" />
-		<file src="src\Cmdty.Core.Trees\bin\Release\netstandard2.0\Cmdty.Core.Trees.dll" target="lib\netstandard2.0" />
-		<file src="src\Cmdty.Core.Trees\bin\Release\netstandard2.0\Cmdty.Core.Trees.pdb" target="lib\netstandard2.0" />
-		<file src="src\Cmdty.Core.Simulation\bin\Release\netstandard2.0\Cmdty.Core.Simulation.dll" target="lib\netstandard2.0" />
-		<file src="src\Cmdty.Core.Simulation\bin\Release\netstandard2.0\Cmdty.Core.Simulation.pdb" target="lib\netstandard2.0" />
+		<file src="src\Cmdty.Core.Trees\bin\$configuration$\net45\Cmdty.Core.Trees.dll" target="lib\net45" />
+		<file src="src\Cmdty.Core.Trees\bin\$configuration$\net45\Cmdty.Core.Trees.pdb" target="lib\net45" />
+		<file src="src\Cmdty.Core.Simulation\bin\$configuration$\net45\Cmdty.Core.Simulation.dll" target="lib\net45" />
+		<file src="src\Cmdty.Core.Simulation\bin\$configuration$\net45\Cmdty.Core.Simulation.pdb" target="lib\net45" />
+		<file src="src\Cmdty.Core.Trees\bin\$configuration$\netstandard2.0\Cmdty.Core.Trees.dll" target="lib\netstandard2.0" />
+		<file src="src\Cmdty.Core.Trees\bin\$configuration$\netstandard2.0\Cmdty.Core.Trees.pdb" target="lib\netstandard2.0" />
+		<file src="src\Cmdty.Core.Simulation\bin\$configuration$\netstandard2.0\Cmdty.Core.Simulation.dll" target="lib\netstandard2.0" />
+		<file src="src\Cmdty.Core.Simulation\bin\$configuration$\netstandard2.0\Cmdty.Core.Simulation.pdb" target="lib\netstandard2.0" />
 	</files>
 </package>

@@ -99,7 +99,11 @@ Task("Pack-NuGet")
 {
 	var nuGetPackSettings = new NuGetPackSettings
 	{
-		OutputDirectory = artifactsDirectory
+		OutputDirectory = artifactsDirectory,
+		Properties = new Dictionary<string, string>
+		{
+			{ "configuration", configuration }
+		}
 	};
 	NuGetPack("./Cmdty.Core.nuspec", nuGetPackSettings);
 });	
