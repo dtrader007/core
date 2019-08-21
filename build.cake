@@ -92,14 +92,28 @@ Task("Test-C#")
     }
 });
 
+using System.Reflection;
+
 Task("Pack-NuGet")
 	.IsDependentOn("Test-C#")
 	.IsDependentOn("Clean-Artifacts")
-	.Does(() =>
+	.Does(setupContext =>
 {
+	string workingDirectory = setupContext.Environment.WorkingDirectory.ToString();
+
+	string assemblyPath = System.IO.Path.Combine(workingDirectory, "src", "Cmdty.Core.Trees", "bin", configuration, "net45", "Cmdty.Core.Trees.dll");
+	Information(assemblyPath);
+	
+	Assembly assembly = Assembly.LoadFrom(assemblyPath);
+
+	string productVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(assembly.Location).ProductVersion;
+
+	Information(productVersion);
+
 	var nuGetPackSettings = new NuGetPackSettings
 	{
 		OutputDirectory = artifactsDirectory,
+		Version =  productVersion,
 		Properties = new Dictionary<string, string>
 		{
 			{ "configuration", configuration }
@@ -107,6 +121,14 @@ Task("Pack-NuGet")
 	};
 	NuGetPack("./Cmdty.Core.nuspec", nuGetPackSettings);
 });	
+
+
+private string GetAssemblyVersion(string configuration, string workingDirectory)
+{
+	string assemblyPath = System.IO.Path.Combine(workingDirectory, "src", "Cmdty.Core.Trees", "bin", configuration, "net45", "Cmdty.Core.Trees.dll");
+	System.Reflection.Assembly assembly = System.Reflection.Assembly.Load(assemblyPath);
+	return "";
+}
 
 
 Task("Default")
