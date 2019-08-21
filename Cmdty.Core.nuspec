@@ -15,15 +15,13 @@
 		<repository url="https://github.com/cmdty/core" />
 		<dependencies>
 		  <group targetFramework=".NETFramework4.5">
-			<dependency id="JetBrains.Annotations" version="2019.1.1" exclude="Build,Analyzers" />
-			<dependency id="MathNet.Numerics.Signed" version="4.8.1" exclude="Build,Analyzers" />
-			<dependency id="System.ValueTuple" version="4.5.0" exclude="Build,Analyzers" />
-		  </group>
+			  <dependency id="JetBrains.Annotations" version="2019.1.1" exclude="Build,Analyzers" />
+        <dependency id="Cmdty.Curves" version="0.1.0-alpha2019081704" exclude="Build,Analyzers" />
+      </group>
 		  <group targetFramework=".NETStandard2.0">
-			<dependency id="JetBrains.Annotations" version="2019.1.1" exclude="Build,Analyzers" />
-			<dependency id="MathNet.Numerics.Signed" version="4.8.1" exclude="Build,Analyzers" />
-			<dependency id="System.ValueTuple" version="4.5.0" exclude="Build,Analyzers" />
-		  </group>
+			  <dependency id="JetBrains.Annotations" version="2019.1.1" exclude="Build,Analyzers" />
+        <dependency id="Cmdty.Curves" version="0.1.0-alpha2019081704" exclude="Build,Analyzers" />
+      </group>
 		</dependencies>
 	</metadata>
 	<files>
