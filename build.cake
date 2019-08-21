@@ -1,6 +1,7 @@
 var target = Argument<string>("Target", "Default");
 var configuration = Argument<string>("Configuration", "Release");
 
+var artifactsDirectory = Directory("./artifacts");
 var testResultDir = "./temp/";
 var isRunningOnBuildServer = !BuildSystem.IsLocalBuild;
 
@@ -17,6 +18,12 @@ if (HasArgument("VersionPrefix"))
 {
     msBuildSettings.WithProperty("VersionPrefix", Argument<string>("VersionPrefix"));
 }
+
+Task("Clean-Artifacts")
+    .Does(() =>
+{
+    CleanDirectory(artifactsDirectory);
+});
 
 Task("Add-NuGetSource")
     .Does(() =>
@@ -48,6 +55,18 @@ Task("Add-NuGetSource")
 		}
     });
 
+Task("Build")
+	.IsDependentOn("Add-NuGetSource")
+    .Does(() =>
+{
+    var dotNetCoreSettings = new DotNetCoreBuildSettings()
+            {
+                Configuration = configuration,
+                MSBuildSettings = msBuildSettings
+            };
+    DotNetCoreBuild("Cmdty.Core.sln", dotNetCoreSettings);
+});
+
 Task("Test-C#")
     .IsDependentOn("Build")
     .Does(() =>
@@ -73,22 +92,23 @@ Task("Test-C#")
     }
 });
 
-Task("Build")
-	.IsDependentOn("Add-NuGetSource")
-    .Does(() =>
+Task("Pack-NuGet")
+	.IsDependentOn("Test-C#")
+	.IsDependentOn("Clean-Artifacts")
+	.Does(() =>
 {
-    var dotNetCoreSettings = new DotNetCoreBuildSettings()
-            {
-                Configuration = configuration,
-                MSBuildSettings = msBuildSettings
-            };
-    DotNetCoreBuild("Cmdty.Core.sln", dotNetCoreSettings);
-});
+	var nuGetPackSettings = new NuGetPackSettings
+	{
+		OutputDirectory = artifactsDirectory
+	};
+	NuGetPack("./Cmdty.Core.nuspec", nuGetPackSettings);
+});	
+
 
 Task("Default")
-	.IsDependentOn("Test-C#");
+	.IsDependentOn("Pack-NuGet");
 
 Task("CI")
-	.IsDependentOn("Test-C#");
+	.IsDependentOn("Pack-NuGet");
 
 RunTarget(target);
