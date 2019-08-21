@@ -125,10 +125,25 @@ private string GetAssemblyVersion(string configuration, string workingDirectory)
 	return productVersion;
 }
 
+Task("Push-NuGetToCmdtyFeed")
+    .IsDependentOn("Add-NuGetSource")
+    .IsDependentOn("Pack-NuGet")
+    .Does(() =>
+{
+    var nupkgPath = GetFiles(artifactsDirectory.ToString() + "/*.nupkg").Single();
+    Information($"Pushing NuGetPackage in {nupkgPath} to Cmdty feed");
+    NuGetPush(nupkgPath, new NuGetPushSettings 
+    {
+        Source = "Cmdty",
+        ApiKey = "VSTS"
+    });
+});
+
+
 Task("Default")
 	.IsDependentOn("Pack-NuGet");
 
 Task("CI")
-	.IsDependentOn("Pack-NuGet");
+	.IsDependentOn("Push-NuGetToCmdtyFeed");
 
 RunTarget(target);
