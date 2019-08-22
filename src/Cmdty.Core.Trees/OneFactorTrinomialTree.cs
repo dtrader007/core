@@ -58,12 +58,35 @@ namespace Cmdty.Core.Trees
 
             int maxNumTreeLevels = 0; // TODO calc = jmax * 2 + 1
 
-
-            // Calculate node prices using forward induction
-            var nodePrices = new double[numPeriods][];
-            var nodeProbabilities = new double[numPeriods][];
             var transitionProbabilities = new double[numPeriods - 1][][];
 
+
+            // Calculate node prices using forward induction
+            var nodeProbabilities = new double[numPeriods][];
+            var nodePrices = new double[numPeriods][];
+
+            nodeProbabilities[0] = new[] {1.0}; // Current point as probability 1
+
+            for (int i = 0; i < numPeriods - 1; i++) // Loop forward through time
+            {
+                int currentStepNumLevels = nodePrices[i].Length;
+                int nextStepNumLevels = nodePrices[i + 1].Length;
+                nodeProbabilities[i + 1] = new double[nextStepNumLevels];
+                bool treeHasReachedWidestPoint = nodePrices[i].Length == maxNumTreeLevels;
+
+                for (int j = 0; j < currentStepNumLevels; j++) // Loop through the tree price levels
+                {
+                    double currentNodeProbability = nodeProbabilities[i][j];
+                    (int nextStepTopIndex, int nextStepMiddleIndex, int nextStepBottomIndex) = 
+                                GetNextStepIndexPositions(j, treeHasReachedWidestPoint, maxNumTreeLevels);
+
+                    double[] currentNodeTransitionProbabilities = transitionProbabilities[i][j];
+                    nodeProbabilities[i][nextStepTopIndex] += currentNodeProbability * currentNodeTransitionProbabilities[2];
+                    nodeProbabilities[i][nextStepMiddleIndex] += currentNodeProbability * currentNodeTransitionProbabilities[1];
+                    nodeProbabilities[i][nextStepBottomIndex] += currentNodeProbability * currentNodeTransitionProbabilities[0];
+                }
+
+            }
 
 
             // Populate results
@@ -85,28 +108,11 @@ namespace Cmdty.Core.Trees
                 bool treeHasReachedWidestPoint = nodePrices[i].Length == maxNumTreeLevels;
                 for (int j = 0; j < nodePrices[i].Length; j++) // Loop through price levels
                 {
-                    int nextPeriodTopNodeIndex;
-                    int nextPeriodMiddleNodeIndex;
-                    int nextPeriodBottomNodeIndex;
+                    (int nextPeriodTopNodeIndex,
+                            int nextPeriodMiddleNodeIndex,
+                            int nextPeriodBottomNodeIndex) =
+                        GetNextStepIndexPositions(j, treeHasReachedWidestPoint, maxNumTreeLevels);
 
-                    if (treeHasReachedWidestPoint && j == 0)
-                    {
-                        nextPeriodTopNodeIndex = 2;
-                        nextPeriodMiddleNodeIndex = 1;
-                        nextPeriodBottomNodeIndex = 0;
-                    }
-                    else if (treeHasReachedWidestPoint && j == maxNumTreeLevels - 1)
-                    {
-                        nextPeriodTopNodeIndex = maxNumTreeLevels - 1;
-                        nextPeriodMiddleNodeIndex = maxNumTreeLevels - 2;
-                        nextPeriodBottomNodeIndex = maxNumTreeLevels - 3;
-                    }
-                    else
-                    {
-                        nextPeriodTopNodeIndex = j + 2;
-                        nextPeriodMiddleNodeIndex = j + 1;
-                        nextPeriodBottomNodeIndex = j;
-                    }
                     var topTransition = new NodeTransition(transitionProbabilities[i][j][2], resultNodes[i + 1][nextPeriodTopNodeIndex]);
                     var middleTransition = new NodeTransition(transitionProbabilities[i][j][1], resultNodes[i + 1][nextPeriodMiddleNodeIndex]);
                     var bottomTransition = new NodeTransition(transitionProbabilities[i][j][0], resultNodes[i + 1][nextPeriodBottomNodeIndex]);
@@ -118,6 +124,22 @@ namespace Cmdty.Core.Trees
             }
             
             return new TimeSeries<T, IReadOnlyList<TreeNode>>(forwardCurve.Indices, resultNodes);
+        }
+
+        private static (int topIndex, int middleIndex, int bottomIndex) GetNextStepIndexPositions(int currentStepIndex,
+                                    bool treeHasReachedWidestPoint, int maxNumTreeLevels)
+        {
+            if (treeHasReachedWidestPoint && currentStepIndex == 0)
+            {
+                return (topIndex: 2, middleIndex: 1, bottomIndex: 0);
+            }
+
+            if (treeHasReachedWidestPoint && currentStepIndex == maxNumTreeLevels - 1)
+            {
+                return (topIndex: maxNumTreeLevels - 1, middleIndex: maxNumTreeLevels - 2, bottomIndex: maxNumTreeLevels - 3);
+            }
+
+            return (topIndex: currentStepIndex + 2, middleIndex: currentStepIndex + 1, bottomIndex: currentStepIndex);
         }
 
     }
