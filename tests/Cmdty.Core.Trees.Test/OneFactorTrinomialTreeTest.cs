@@ -62,7 +62,7 @@ namespace Cmdty.Core.Trees.Test
         public void CreateTree_MeanReversionNegative_ThrowsArgumentException()
         {
             Assert.Throws<ArgumentException>(() =>
-                OneFactorTrinomialTree.CreateTree(_forwardCurve, -0.1, _volatilityCurve));
+                OneFactorTrinomialTree.CreateTree(_forwardCurve, -0.1, _volatilityCurve, 1.0/365));
         }
 
 
