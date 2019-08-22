@@ -23,7 +23,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		version.props = version.props
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cmdty.Core.Trees.Test", "test\Cmdty.Core.Trees.Test\Cmdty.Core.Trees.Test.csproj", "{6784E33C-3A3A-4EE9-A558-8D64DFBB8404}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cmdty.Core.Trees.Test", "tests\Cmdty.Core.Trees.Test\Cmdty.Core.Trees.Test.csproj", "{6784E33C-3A3A-4EE9-A558-8D64DFBB8404}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -37,6 +37,23 @@ namespace Cmdty.Core.Trees
                                                                     TimeSeries<T, double> volatility)
             where T : ITimePeriod<T>
         {
+            // TODO check forwardCurve for null
+            if (lambda <= 0) // TODO allow to be zero for non-mean reverting case?
+                throw new ArgumentException("Mean reversion must be positive.", nameof(lambda));
+
+            if (forwardCurve.Count < 2)
+                throw new ArgumentException("Forward curve must contain at least 2 points.", nameof(forwardCurve));
+
+            // TODO replace the two conditions below with call to new method on TimeSeries, e.g. indices are subset
+            if (volatility.IsEmpty)
+                throw new ArgumentException("Volatility curve is empty.", nameof(volatility));
+
+            if (volatility.Start.CompareTo(forwardCurve.Start) > 0 || volatility.End.CompareTo(forwardCurve.End) < 0)
+                throw new ArgumentException("Volatility curve does not contain a point for every point on the forward curve.", nameof(volatility));
+
+
+
+
             throw new NotImplementedException();
         }
 

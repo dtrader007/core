@@ -32,13 +32,15 @@ using NUnit.Framework;
 
 namespace Cmdty.Core.Trees.Test
 {
+    [TestFixture]
     public sealed class OneFactorTrinomialTreeTest
     {
         private readonly TimeSeries<Day, double> _forwardCurve;
+        private readonly TimeSeries<Day, double> _volatilityCurve;
 
         public OneFactorTrinomialTreeTest()
         {
-            // TODO set up _forwardCurve
+            // TODO set up _forwardCurve and _volatilityCurve
         }
 
         [Test]
@@ -55,6 +57,14 @@ namespace Cmdty.Core.Trees.Test
             }
 
         }
+
+        [Test]
+        public void CreateTree_MeanReversionNegative_ThrowsArgumentException()
+        {
+            Assert.Throws<ArgumentException>(() =>
+                OneFactorTrinomialTree.CreateTree(_forwardCurve, -0.1, _volatilityCurve));
+        }
+
 
         private TimeSeries<Day, IReadOnlyList<TreeNode>> CreateTestTree()
         {
