@@ -86,7 +86,6 @@ namespace Cmdty.Core.Trees.Test
                     }
 
         [Test]
-        [Ignore("Tree hasn't been fully implemented yet")]
         public void CreateTree_ExpectedSpotPriceEqualsForwardPrice()
         {
             TimeSeries<Day, IReadOnlyList<TreeNode>> tree = CreateTestTree();
@@ -95,7 +94,7 @@ namespace Cmdty.Core.Trees.Test
             {
                 double treeExpectedSpotPrice = nodes.Sum(node => node.Value * node.Probability);
                 double forwardPrice = _forwardCurve[day];
-                Assert.AreEqual(forwardPrice, treeExpectedSpotPrice);
+                Assert.AreEqual(forwardPrice, treeExpectedSpotPrice, 1E-12);
             }
 
         }
@@ -114,7 +113,6 @@ namespace Cmdty.Core.Trees.Test
         }
 
         [Test]
-        [Ignore("Tree hasn't been fully implemented yet")]
         public void CreateTree_AllNodeProbabilitiesArePositive()
         {
             TimeSeries<Day, IReadOnlyList<TreeNode>> tree = CreateTestTree();
@@ -123,29 +121,27 @@ namespace Cmdty.Core.Trees.Test
             {
                 foreach (var treeNode in treeNodes)
                 {
-                    Assert.Greater(0.0, treeNode.Probability);
+                    Assert.Greater(treeNode.Probability, 0.0);
                 }
             }
         }
 
         [Test]
-        [Ignore("Tree hasn't been fully implemented yet")]
         public void CreateTree_SumOfNodeTransitionProbabilitiesEqualsOne()
         {
             TimeSeries<Day, IReadOnlyList<TreeNode>> tree = CreateTestTree();
 
-            foreach (IReadOnlyList<TreeNode> treeNodes in tree.Data)
+            foreach (IReadOnlyList<TreeNode> treeNodes in tree.Data.Take(tree.Data.Count - 1)) // Don't include the final step where there are no transitions
             {
                 foreach (var treeNode in treeNodes)
                 {
                     double sumTransitionProbabilities = treeNode.Transitions.Sum(transition => transition.Probability);
-                    Assert.AreEqual(1.0, sumTransitionProbabilities);
+                    Assert.AreEqual(1.0, sumTransitionProbabilities, 1E-12);
                 }
             }
         }
 
         [Test]
-        [Ignore("Tree hasn't been fully implemented yet")]
         public void CreateTree_SumOfNodeProbabilitiesEqualsOne()
         {
             TimeSeries<Day, IReadOnlyList<TreeNode>> tree = CreateTestTree();
@@ -153,11 +149,9 @@ namespace Cmdty.Core.Trees.Test
             foreach (IReadOnlyList<TreeNode> treeNodes in tree.Data)
             {
                 double sumNodeProbabilities = treeNodes.Sum(node => node.Probability);
-                Assert.AreEqual(1.0, sumNodeProbabilities);
+                Assert.AreEqual(1.0, sumNodeProbabilities, 1E-12);
             }
         }
-
-
-
+        
     }
 }
