@@ -44,7 +44,7 @@ namespace Cmdty.Core.Trees.Test
         }
 
         [Test]
-        [Ignore("Hasn't been fully implemented yet")]
+        [Ignore("Tree hasn't been fully implemented yet")]
         public void CreateTree_ExpectedSpotPriceEqualsForwardPrice()
         {
             TimeSeries<Day, IReadOnlyList<TreeNode>> tree = CreateTestTree();
@@ -70,6 +70,52 @@ namespace Cmdty.Core.Trees.Test
         {
             throw new NotImplementedException();
         }
+
+        [Test]
+        [Ignore("Tree hasn't been fully implemented yet")]
+        public void CreateTree_AllNodeProbabilitiesArePositive()
+        {
+            TimeSeries<Day, IReadOnlyList<TreeNode>> tree = CreateTestTree();
+
+            foreach (IReadOnlyList<TreeNode> treeNodes in tree.Data)
+            {
+                foreach (var treeNode in treeNodes)
+                {
+                    Assert.Greater(0.0, treeNode.Probability);
+                }
+            }
+        }
+
+        [Test]
+        [Ignore("Tree hasn't been fully implemented yet")]
+        public void CreateTree_SumOfNodeTransitionProbabilitiesEqualsOne()
+        {
+            TimeSeries<Day, IReadOnlyList<TreeNode>> tree = CreateTestTree();
+
+            foreach (IReadOnlyList<TreeNode> treeNodes in tree.Data)
+            {
+                foreach (var treeNode in treeNodes)
+                {
+                    double sumTransitionProbabilities = treeNode.Transitions.Sum(transition => transition.Probability);
+                    Assert.AreEqual(1.0, sumTransitionProbabilities);
+                }
+            }
+        }
+
+        [Test]
+        [Ignore("Tree hasn't been fully implemented yet")]
+        public void CreateTree_SumOfNodeProbabilitiesEqualsOne()
+        {
+            TimeSeries<Day, IReadOnlyList<TreeNode>> tree = CreateTestTree();
+
+            foreach (IReadOnlyList<TreeNode> treeNodes in tree.Data)
+            {
+                double sumNodeProbabilities = treeNodes.Sum(node => node.Probability);
+                Assert.AreEqual(1.0, sumNodeProbabilities);
+            }
+        }
+
+
 
     }
 }
