@@ -173,7 +173,7 @@ namespace Cmdty.Core.Trees.Test
 
                 double logPriceVariance = expectedLogPriceSquared - expectedLogPrice * expectedLogPrice;
                 double integralOfSquaredVol = IntegralOfSquaredVol(day);
-                Assert.AreEqual(integralOfSquaredVol, logPriceVariance);
+                Assert.AreEqual(integralOfSquaredVol, logPriceVariance, 1E-10);
             }
             
         }

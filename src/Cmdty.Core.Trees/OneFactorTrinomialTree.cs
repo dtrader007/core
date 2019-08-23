@@ -41,11 +41,11 @@ namespace Cmdty.Core.Trees
     {
 
         public static TimeSeries<T, IReadOnlyList<TreeNode>> CreateTree<T>([NotNull] TimeSeries<T, double> forwardCurve, double meanReversion,
-                                                [NotNull] TimeSeries<T, double> spotVolatility, double onePeriodTimeDelta)
+                                                [NotNull] TimeSeries<T, double> spotVolatilityCurve, double onePeriodTimeDelta)
             where T : ITimePeriod<T>
         {
             if (forwardCurve == null) throw new ArgumentNullException(nameof(forwardCurve));
-            if (spotVolatility == null) throw new ArgumentNullException(nameof(spotVolatility));
+            if (spotVolatilityCurve == null) throw new ArgumentNullException(nameof(spotVolatilityCurve));
 
             if (meanReversion <= 0) // TODO allow to be zero for non-mean reverting case?
                 throw new ArgumentException("Mean reversion must be positive.", nameof(meanReversion));
@@ -57,11 +57,11 @@ namespace Cmdty.Core.Trees
                 throw new ArgumentException("Forward curve must contain at least 2 points.", nameof(forwardCurve));
 
             // TODO replace the two conditions below with call to new method on TimeSeries, e.g. indices are subset
-            if (spotVolatility.IsEmpty)
-                throw new ArgumentException("Volatility curve is empty.", nameof(spotVolatility));
+            if (spotVolatilityCurve.IsEmpty)
+                throw new ArgumentException("Volatility curve is empty.", nameof(spotVolatilityCurve));
 
-            if (spotVolatility.Start.CompareTo(forwardCurve.Start) > 0 || spotVolatility.End.CompareTo(forwardCurve.End) < 0)
-                throw new ArgumentException("Volatility curve does not contain a point for every point on the forward curve.", nameof(spotVolatility));
+            if (spotVolatilityCurve.Start.CompareTo(forwardCurve.Start) > 0 || spotVolatilityCurve.End.CompareTo(forwardCurve.End) < 0)
+                throw new ArgumentException("Volatility curve does not contain a point for every point on the forward curve.", nameof(spotVolatilityCurve));
 
             int numPeriods = forwardCurve.Count;
 
@@ -161,9 +161,10 @@ namespace Cmdty.Core.Trees
             for (int i = 0; i < numPeriods; i++)
             {
                 double expectedExponentialOfOu = 0;
+                double spotVolatility = spotVolatilityCurve[i];
                 for (int j = 0; j < nodeProbabilities[i].Length; j++)
                 {
-                    expectedExponentialOfOu += nodeProbabilities[i][j] * Math.Exp(nodeOuProcessValues[i][j]); // TODO adjust for volatility?
+                    expectedExponentialOfOu += nodeProbabilities[i][j] * Math.Exp(spotVolatility * nodeOuProcessValues[i][j]);
                 }
                 double forwardPrice = forwardCurve[i];
                 adjustmentTerms[i] = Math.Log(forwardPrice / expectedExponentialOfOu);
@@ -176,9 +177,11 @@ namespace Cmdty.Core.Trees
             int lastPeriodIndex = numPeriods - 1;
             int numLevelsAtEnd = nodeOuProcessValues[lastPeriodIndex].Length;
             resultNodes[lastPeriodIndex] = new TreeNode[numLevelsAtEnd];
+            double spotVolatilityAtEnd = spotVolatilityCurve[lastPeriodIndex];
             for (int j = 0; j < numLevelsAtEnd; j++) // Loop through price levels
             {
-                double nodeSpotPrice = Math.Exp(nodeOuProcessValues[lastPeriodIndex][j] + adjustmentTerms[lastPeriodIndex]);
+
+                double nodeSpotPrice = Math.Exp(nodeOuProcessValues[lastPeriodIndex][j] * spotVolatilityAtEnd + adjustmentTerms[lastPeriodIndex]);
 
                 resultNodes[lastPeriodIndex][j] = new TreeNode(nodeSpotPrice,
                         nodeProbabilities[lastPeriodIndex][j], new NodeTransition[0]);
@@ -187,6 +190,7 @@ namespace Cmdty.Core.Trees
             // Populate nodes at all other time steps
             for (int i = numPeriods - 2; i >= 0; i--) // Loop back through time periods
             {
+                double spotVolatility = spotVolatilityCurve[i];
                 resultNodes[i] = new TreeNode[nodeOuProcessValues[i].Length];
                 bool treeHasReachedWidestPoint = nodeOuProcessValues[i].Length == maxNumTreeLevels;
                 for (int j = 0; j < nodeOuProcessValues[i].Length; j++) // Loop through price levels
@@ -199,7 +203,7 @@ namespace Cmdty.Core.Trees
                     var bottomTransition = new NodeTransition(transitionProbabilities[i][j][0], resultNodes[i + 1][nextPeriodBottomNodeIndex]);
                     var nodeTransitions = new NodeTransition[] {bottomTransition, middleTransition, topTransition};
 
-                    double nodeSpotPrice = Math.Exp(nodeOuProcessValues[i][j] + adjustmentTerms[i]);
+                    double nodeSpotPrice = Math.Exp(nodeOuProcessValues[i][j] * spotVolatility + adjustmentTerms[i]);
 
                     resultNodes[i][j] = new TreeNode(nodeSpotPrice, nodeProbabilities[i][j], nodeTransitions);
                 }
