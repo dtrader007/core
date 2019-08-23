@@ -37,7 +37,7 @@ namespace Cmdty.Core.Trees.Test
     {
         private readonly TimeSeries<Day, double> _forwardCurve;
         private readonly TimeSeries<Day, double> _spotVolatility;
-        private const double MeanReversion = 0.32;
+        private const double MeanReversion = 21.0;
         private const double TimeDelta = 1.0/365;
 
         public OneFactorTrinomialTreeTest()

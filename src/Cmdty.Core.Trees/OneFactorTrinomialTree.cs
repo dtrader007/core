@@ -226,6 +226,11 @@ namespace Cmdty.Core.Trees
                 return (topIndex: maxNumTreeLevels - 1, middleIndex: maxNumTreeLevels - 2, bottomIndex: maxNumTreeLevels - 3);
             }
 
+            if (treeHasReachedWidestPoint)
+            {
+                return (topIndex: currentStepIndex + 1, middleIndex: currentStepIndex, bottomIndex: currentStepIndex - 1);
+            }
+
             return (topIndex: currentStepIndex + 2, middleIndex: currentStepIndex + 1, bottomIndex: currentStepIndex);
         }
 
