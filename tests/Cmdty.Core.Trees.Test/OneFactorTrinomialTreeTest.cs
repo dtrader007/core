@@ -152,6 +152,39 @@ namespace Cmdty.Core.Trees.Test
                 Assert.AreEqual(1.0, sumNodeProbabilities, 1E-12);
             }
         }
-        
+
+        [Test]
+        [Ignore("Volatility not properly incorporated in calculation yet.")]
+        public void CreateTree_VarianceOfLogNodePricesEqualsIntegralOfSquaredVolFunction()
+        {
+            TimeSeries<Day, IReadOnlyList<TreeNode>> tree = CreateTestTree();
+
+            foreach ((Day day, IReadOnlyList<TreeNode> treeNodes) in tree)
+            {
+                double expectedLogPrice = 0.0;
+                double expectedLogPriceSquared = 0.0;
+
+                foreach (TreeNode treeNode in treeNodes)
+                {
+                    double logPrice = Math.Log(treeNode.Value);
+                    expectedLogPrice += logPrice * treeNode.Probability;
+                    expectedLogPriceSquared += logPrice * logPrice * treeNode.Probability;
+                }
+
+                double logPriceVariance = expectedLogPriceSquared - expectedLogPrice * expectedLogPrice;
+                double integralOfSquaredVol = IntegralOfSquaredVol(day);
+                Assert.AreEqual(integralOfSquaredVol, logPriceVariance);
+            }
+            
+        }
+
+        private double IntegralOfSquaredVol(Day forwardDate)
+        {
+            double timeToIntegrate = forwardDate.OffsetFrom(_forwardCurve.Start) * TimeDelta;
+            double spotVol = _spotVolatility[forwardDate];
+
+            return spotVol * spotVol * (1 - Math.Exp(-2 * MeanReversion * timeToIntegrate)) / 2.0 / MeanReversion;
+        }
+
     }
 }
