@@ -41,11 +41,11 @@ namespace Cmdty.Core.Trees
     {
 
         public static TimeSeries<T, IReadOnlyList<TreeNode>> CreateTree<T>([NotNull] TimeSeries<T, double> forwardCurve, double meanReversion,
-                                                [NotNull] TimeSeries<T, double> volatility, double onePeriodTimeDelta)
+                                                [NotNull] TimeSeries<T, double> spotVolatility, double onePeriodTimeDelta)
             where T : ITimePeriod<T>
         {
             if (forwardCurve == null) throw new ArgumentNullException(nameof(forwardCurve));
-            if (volatility == null) throw new ArgumentNullException(nameof(volatility));
+            if (spotVolatility == null) throw new ArgumentNullException(nameof(spotVolatility));
 
             if (meanReversion <= 0) // TODO allow to be zero for non-mean reverting case?
                 throw new ArgumentException("Mean reversion must be positive.", nameof(meanReversion));
@@ -57,11 +57,11 @@ namespace Cmdty.Core.Trees
                 throw new ArgumentException("Forward curve must contain at least 2 points.", nameof(forwardCurve));
 
             // TODO replace the two conditions below with call to new method on TimeSeries, e.g. indices are subset
-            if (volatility.IsEmpty)
-                throw new ArgumentException("Volatility curve is empty.", nameof(volatility));
+            if (spotVolatility.IsEmpty)
+                throw new ArgumentException("Volatility curve is empty.", nameof(spotVolatility));
 
-            if (volatility.Start.CompareTo(forwardCurve.Start) > 0 || volatility.End.CompareTo(forwardCurve.End) < 0)
-                throw new ArgumentException("Volatility curve does not contain a point for every point on the forward curve.", nameof(volatility));
+            if (spotVolatility.Start.CompareTo(forwardCurve.Start) > 0 || spotVolatility.End.CompareTo(forwardCurve.End) < 0)
+                throw new ArgumentException("Volatility curve does not contain a point for every point on the forward curve.", nameof(spotVolatility));
 
             int numPeriods = forwardCurve.Count;
 

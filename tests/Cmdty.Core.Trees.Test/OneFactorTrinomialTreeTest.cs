@@ -36,7 +36,7 @@ namespace Cmdty.Core.Trees.Test
     public sealed class OneFactorTrinomialTreeTest
     {
         private readonly TimeSeries<Day, double> _forwardCurve;
-        private readonly TimeSeries<Day, double> _volatilityCurve;
+        private readonly TimeSeries<Day, double> _spotVolatility;
         private const double MeanReversion = 0.32;
         private const double TimeDelta = 1.0/365;
 
@@ -63,7 +63,7 @@ namespace Cmdty.Core.Trees.Test
                             {new Day(2019, 9, 8),  45.99},
                         }.Build();
 
-            _volatilityCurve = new TimeSeries<Day, double>.Builder
+            _spotVolatility = new TimeSeries<Day, double>.Builder
                         {
                             {new Day(2019, 8, 23),  0.86},
                             {new Day(2019, 8, 24),  0.67},
@@ -103,13 +103,13 @@ namespace Cmdty.Core.Trees.Test
         public void CreateTree_MeanReversionNegative_ThrowsArgumentException()
         {
             Assert.Throws<ArgumentException>(() =>
-                OneFactorTrinomialTree.CreateTree(_forwardCurve, -0.1, _volatilityCurve, 1.0/365));
+                OneFactorTrinomialTree.CreateTree(_forwardCurve, -0.1, _spotVolatility, 1.0/365));
         }
 
 
         private TimeSeries<Day, IReadOnlyList<TreeNode>> CreateTestTree()
         {
-            return OneFactorTrinomialTree.CreateTree(_forwardCurve, MeanReversion, _volatilityCurve, TimeDelta);
+            return OneFactorTrinomialTree.CreateTree(_forwardCurve, MeanReversion, _spotVolatility, TimeDelta);
         }
 
         [Test]
