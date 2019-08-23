@@ -27,6 +27,7 @@ using System;
 using System.Collections.Generic;
 using Cmdty.TimePeriodValueTypes;
 using Cmdty.TimeSeries;
+using JetBrains.Annotations;
 
 namespace Cmdty.Core.Trees
 {
@@ -39,11 +40,13 @@ namespace Cmdty.Core.Trees
     public static class OneFactorTrinomialTree
     {
 
-        public static TimeSeries<T, IReadOnlyList<TreeNode>> CreateTree<T>(TimeSeries<T, double> forwardCurve, double meanReversion, 
-                                                                    TimeSeries<T, double> volatility, double onePeriodTimeDelta)
+        public static TimeSeries<T, IReadOnlyList<TreeNode>> CreateTree<T>([NotNull] TimeSeries<T, double> forwardCurve, double meanReversion,
+                                                [NotNull] TimeSeries<T, double> volatility, double onePeriodTimeDelta)
             where T : ITimePeriod<T>
         {
-            // TODO check forwardCurve for null
+            if (forwardCurve == null) throw new ArgumentNullException(nameof(forwardCurve));
+            if (volatility == null) throw new ArgumentNullException(nameof(volatility));
+
             if (meanReversion <= 0) // TODO allow to be zero for non-mean reverting case?
                 throw new ArgumentException("Mean reversion must be positive.", nameof(meanReversion));
 
