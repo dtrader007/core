@@ -125,7 +125,7 @@ namespace Cmdty.Core.Trees
 
                     // TODO refactor to more memory efficient implementation of storing probabilities
                     transitionProbabilities[i][arrayIndex] = new double[]
-                        {probabilityUp, probabilityMiddle, probabilityDown};
+                        {probabilityDown, probabilityMiddle, probabilityUp};
                 }
             }
 
