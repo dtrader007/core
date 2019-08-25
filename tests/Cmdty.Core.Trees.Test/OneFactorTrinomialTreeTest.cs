@@ -154,6 +154,56 @@ namespace Cmdty.Core.Trees.Test
         }
 
         [Test]
+        public void CreateTree_AllNodesHaveThreeTransitionsExceptAtEnd()
+        {
+            TimeSeries<Day, IReadOnlyList<TreeNode>> tree = CreateTestTree();
+
+            foreach (IReadOnlyList<TreeNode> treeNodes in tree.Data.Take(tree.Data.Count - 1))
+            {
+                foreach (TreeNode treeNode in treeNodes)
+                {
+                    Assert.AreEqual(3, treeNode.Transitions.Count);
+                }
+            }
+        }
+
+        [Test]
+        public void CreateTree_AllNodesHaveIsTerminalNodePropertyFalseExceptAtEnd()
+        {
+            TimeSeries<Day, IReadOnlyList<TreeNode>> tree = CreateTestTree();
+
+            foreach (IReadOnlyList<TreeNode> treeNodes in tree.Data.Take(tree.Data.Count - 1))
+            {
+                foreach (TreeNode treeNode in treeNodes)
+                {
+                    Assert.IsFalse(treeNode.IsTerminalNode);
+                }
+            }
+        }
+
+        [Test]
+        public void CreateTree_AllNodesAtEndHaveZeroTransitions()
+        {
+            TimeSeries<Day, IReadOnlyList<TreeNode>> tree = CreateTestTree();
+
+            foreach (TreeNode treeNode in tree[tree.Count - 1])
+            {
+                Assert.AreEqual(0, treeNode.Transitions.Count);
+            }
+        }
+
+        [Test]
+        public void CreateTree_AllNodesAtEndHaveIsTerminalNodePropertyTrue()
+        {
+            TimeSeries<Day, IReadOnlyList<TreeNode>> tree = CreateTestTree();
+
+            foreach (TreeNode treeNode in tree[tree.Count - 1])
+            {
+                Assert.IsTrue(treeNode.IsTerminalNode);
+            }
+        }
+
+        [Test]
         public void CreateTree_VarianceOfLogNodePricesEqualsIntegralOfSquaredVolFunction()
         {
             TimeSeries<Day, IReadOnlyList<TreeNode>> tree = CreateTestTree();
