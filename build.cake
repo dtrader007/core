@@ -93,8 +93,19 @@ Task("Test-C#")
     }
 });
 
+Task("Build-Samples")
+    .IsDependentOn("Add-NuGetSource")
+	.Does(() =>
+{
+	var dotNetCoreSettings = new DotNetCoreBuildSettings()
+        {
+            Configuration = configuration,
+        };
+	DotNetCoreBuild("samples/csharp/Cmdty.Core.Samples.sln", dotNetCoreSettings);
+});
 
 Task("Pack-NuGet")
+	.IsDependentOn("Build-Samples")
 	.IsDependentOn("Test-C#")
 	.IsDependentOn("Clean-Artifacts")
 	.Does(setupContext =>
@@ -125,6 +136,7 @@ private string GetAssemblyVersion(string configuration, string workingDirectory)
 	string productVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(assembly.Location).ProductVersion;
 	return productVersion;
 }
+
 
 Task("Push-NuGetToCmdtyFeed")
     .IsDependentOn("Add-NuGetSource")
