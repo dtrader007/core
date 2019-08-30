@@ -72,7 +72,7 @@ namespace Cmdty.Core.Samples.TrinomialTree
 
             do
             {
-                int nextMove = random.Next(0, 2);
+                int nextMove = random.Next(0, 3);
                 var transition = treeNode.Transitions[nextMove];
                 treeNode = transition.DestinationNode;
                 Console.WriteLine(treeNode);

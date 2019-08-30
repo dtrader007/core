@@ -9,7 +9,7 @@ Core tools for the valuation and optimisation of physical commodity assets. Curr
 ### Installing
 
 ```
-PM> Install-Package Cmdty.Core -Version 0.1.0-beta1
+PM> Install-Package Cmdty.Core -Version 0.1.0-beta2
 ```
 
 ### Building a Trinomial Tree
