@@ -75,23 +75,19 @@ namespace Cmdty.Core.Trees
             int maxNumTreeLevels = jMax * 2 + 1;
 
             var transitionProbabilities = new double[numPeriods][][]; // TODO refactor so transition probabilities aren't calculated for final step
-            var nodeOuProcessValues = new double[numPeriods][];
 
             // Calculate OU process levels for tree nodes plus transition probabilities
             for (int i = 0; i < numPeriods; i++)
             {
                 int numTreePriceLevels = Math.Min(i * 2 + 1, maxNumTreeLevels);
-                nodeOuProcessValues[i] = new double[numTreePriceLevels];
                 transitionProbabilities[i] = new double[numTreePriceLevels][];
 
                 int indexAdjustToJ = (numTreePriceLevels - 1) / 2;
-                bool treeHasReachedWidestPoint = nodeOuProcessValues[i].Length == maxNumTreeLevels;
+                bool treeHasReachedWidestPoint = numTreePriceLevels == maxNumTreeLevels;
 
                 for (int arrayIndex = 0; arrayIndex < numTreePriceLevels; arrayIndex++)
                 {
                     int j = arrayIndex - indexAdjustToJ;
-
-                    nodeOuProcessValues[i][arrayIndex] = treeSpacing * j;
 
                     // Calculate transition probabilities, see Hull & White P11
                     double probabilityUp;
@@ -127,6 +123,7 @@ namespace Cmdty.Core.Trees
                     transitionProbabilities[i][arrayIndex] = new [] {probabilityDown, probabilityMiddle, probabilityUp};
                 }
             }
+            // TODO combine some of these loops through time
 
             // Calculate the probability of reaching each node using forward induction
             var nodeProbabilities = new double[numPeriods][];
@@ -135,10 +132,10 @@ namespace Cmdty.Core.Trees
 
             for (int i = 0; i < numPeriods - 1; i++) // Loop forward through time
             {
-                int currentStepNumLevels = nodeOuProcessValues[i].Length;
-                int nextStepNumLevels = nodeOuProcessValues[i + 1].Length;
+                int currentStepNumLevels = transitionProbabilities[i].Length;
+                int nextStepNumLevels = transitionProbabilities[i + 1].Length;
                 nodeProbabilities[i + 1] = new double[nextStepNumLevels];
-                bool treeHasReachedWidestPoint = nodeOuProcessValues[i].Length == maxNumTreeLevels;
+                bool treeHasReachedWidestPoint = currentStepNumLevels == maxNumTreeLevels;
 
                 for (int j = 0; j < currentStepNumLevels; j++) // Loop through the tree price levels
                 {
@@ -159,26 +156,34 @@ namespace Cmdty.Core.Trees
             var adjustmentTerms = new double[numPeriods];
             for (int i = 0; i < numPeriods; i++)
             {
+                int numPriceLevels = nodeProbabilities[i].Length;
+                int indexAdjustToJ = (numPriceLevels - 1) / 2;
+
                 double expectedExponentialOfOu = 0;
                 double spotVolatility = spotVolatilityCurve[i];
-                for (int j = 0; j < nodeProbabilities[i].Length; j++)
+                for (int priceLevelIndex = 0; priceLevelIndex < numPriceLevels; priceLevelIndex++)
                 {
-                    expectedExponentialOfOu += nodeProbabilities[i][j] * Math.Exp(spotVolatility * nodeOuProcessValues[i][j]);
+                    int j = priceLevelIndex - indexAdjustToJ;
+                    double ouProcessValue = treeSpacing * j;
+                    expectedExponentialOfOu += nodeProbabilities[i][priceLevelIndex] * Math.Exp(spotVolatility * ouProcessValue);
                 }
                 double forwardPrice = forwardCurve[i];
                 adjustmentTerms[i] = Math.Log(forwardPrice / expectedExponentialOfOu);
             }
 
-            // Populate results
+            // Populate results looping backward from end in order to populate transitions
             var resultNodes = new TreeNode[numPeriods][];
 
             // Populate nodes at all other time steps
             for (int i = numPeriods - 1; i >= 0; i--) // Loop back through time periods
             {
+                int numPriceLevels = nodeProbabilities[i].Length;
+                int indexAdjustToJ = (numPriceLevels - 1) / 2;
+
                 double spotVolatility = spotVolatilityCurve[i];
-                resultNodes[i] = new TreeNode[nodeOuProcessValues[i].Length];
-                bool treeHasReachedWidestPoint = nodeOuProcessValues[i].Length == maxNumTreeLevels;
-                for (int j = 0; j < nodeOuProcessValues[i].Length; j++) // Loop through price levels
+                resultNodes[i] = new TreeNode[numPriceLevels];
+                bool treeHasReachedWidestPoint = numPriceLevels == maxNumTreeLevels;
+                for (int priceLevelIndex = 0; priceLevelIndex < numPriceLevels; priceLevelIndex++) // Loop through price levels
                 {
                     NodeTransition[] nodeTransitions;
                     if (i == numPeriods - 1)
@@ -188,19 +193,20 @@ namespace Cmdty.Core.Trees
                     else
                     {
                         (int nextPeriodTopNodeIndex, int nextPeriodMiddleNodeIndex, int nextPeriodBottomNodeIndex) =
-                            GetNextStepIndexPositions(j, treeHasReachedWidestPoint, maxNumTreeLevels);
-                        var topTransition = new NodeTransition(transitionProbabilities[i][j][2],
+                            GetNextStepIndexPositions(priceLevelIndex, treeHasReachedWidestPoint, maxNumTreeLevels);
+                        var topTransition = new NodeTransition(transitionProbabilities[i][priceLevelIndex][2],
                                                     resultNodes[i + 1][nextPeriodTopNodeIndex]);
-                        var middleTransition = new NodeTransition(transitionProbabilities[i][j][1],
+                        var middleTransition = new NodeTransition(transitionProbabilities[i][priceLevelIndex][1],
                                                     resultNodes[i + 1][nextPeriodMiddleNodeIndex]);
-                        var bottomTransition = new NodeTransition(transitionProbabilities[i][j][0],
+                        var bottomTransition = new NodeTransition(transitionProbabilities[i][priceLevelIndex][0],
                                                     resultNodes[i + 1][nextPeriodBottomNodeIndex]);
                         nodeTransitions = new[] { bottomTransition, middleTransition, topTransition };
                     }
+                    int j = priceLevelIndex - indexAdjustToJ;
+                    double ouProcessValue = treeSpacing * j;
+                    double nodeSpotPrice = Math.Exp(ouProcessValue * spotVolatility + adjustmentTerms[i]);
 
-                    double nodeSpotPrice = Math.Exp(nodeOuProcessValues[i][j] * spotVolatility + adjustmentTerms[i]);
-
-                    resultNodes[i][j] = new TreeNode(nodeSpotPrice, nodeProbabilities[i][j], j, nodeTransitions);
+                    resultNodes[i][priceLevelIndex] = new TreeNode(nodeSpotPrice, nodeProbabilities[i][priceLevelIndex], priceLevelIndex, nodeTransitions);
                 }
 
             }
