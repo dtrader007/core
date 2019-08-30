@@ -47,7 +47,7 @@ namespace Cmdty.Core.Trees
             if (forwardCurve == null) throw new ArgumentNullException(nameof(forwardCurve));
             if (spotVolatilityCurve == null) throw new ArgumentNullException(nameof(spotVolatilityCurve));
 
-            if (meanReversion <= 0) // TODO allow to be zero for non-mean reverting case?
+            if (meanReversion <= 0)
                 throw new ArgumentException("Mean reversion must be positive.", nameof(meanReversion));
 
             if (onePeriodTimeDelta <= 0)
@@ -124,8 +124,7 @@ namespace Cmdty.Core.Trees
                     }
 
                     // TODO refactor to more memory efficient implementation of storing probabilities
-                    transitionProbabilities[i][arrayIndex] = new double[]
-                        {probabilityDown, probabilityMiddle, probabilityUp};
+                    transitionProbabilities[i][arrayIndex] = new [] {probabilityDown, probabilityMiddle, probabilityUp};
                 }
             }
 
@@ -173,36 +172,31 @@ namespace Cmdty.Core.Trees
             // Populate results
             var resultNodes = new TreeNode[numPeriods][];
 
-            // Populate nodes at end, with no forward transitions
-            // TODO move this into loop below
-            int lastPeriodIndex = numPeriods - 1;
-            int numLevelsAtEnd = nodeOuProcessValues[lastPeriodIndex].Length;
-            resultNodes[lastPeriodIndex] = new TreeNode[numLevelsAtEnd];
-            double spotVolatilityAtEnd = spotVolatilityCurve[lastPeriodIndex];
-            for (int j = 0; j < numLevelsAtEnd; j++) // Loop through price levels
-            {
-
-                double nodeSpotPrice = Math.Exp(nodeOuProcessValues[lastPeriodIndex][j] * spotVolatilityAtEnd + adjustmentTerms[lastPeriodIndex]);
-
-                resultNodes[lastPeriodIndex][j] = new TreeNode(nodeSpotPrice,
-                        nodeProbabilities[lastPeriodIndex][j], j, new NodeTransition[0]);
-            }
-
             // Populate nodes at all other time steps
-            for (int i = numPeriods - 2; i >= 0; i--) // Loop back through time periods
+            for (int i = numPeriods - 1; i >= 0; i--) // Loop back through time periods
             {
                 double spotVolatility = spotVolatilityCurve[i];
                 resultNodes[i] = new TreeNode[nodeOuProcessValues[i].Length];
                 bool treeHasReachedWidestPoint = nodeOuProcessValues[i].Length == maxNumTreeLevels;
                 for (int j = 0; j < nodeOuProcessValues[i].Length; j++) // Loop through price levels
                 {
-                    (int nextPeriodTopNodeIndex, int nextPeriodMiddleNodeIndex,int nextPeriodBottomNodeIndex) =
-                                            GetNextStepIndexPositions(j, treeHasReachedWidestPoint, maxNumTreeLevels);
-
-                    var topTransition = new NodeTransition(transitionProbabilities[i][j][2], resultNodes[i + 1][nextPeriodTopNodeIndex]);
-                    var middleTransition = new NodeTransition(transitionProbabilities[i][j][1], resultNodes[i + 1][nextPeriodMiddleNodeIndex]);
-                    var bottomTransition = new NodeTransition(transitionProbabilities[i][j][0], resultNodes[i + 1][nextPeriodBottomNodeIndex]);
-                    var nodeTransitions = new NodeTransition[] {bottomTransition, middleTransition, topTransition};
+                    NodeTransition[] nodeTransitions;
+                    if (i == numPeriods - 1)
+                    {
+                        nodeTransitions = new NodeTransition[0];
+                    }
+                    else
+                    {
+                        (int nextPeriodTopNodeIndex, int nextPeriodMiddleNodeIndex, int nextPeriodBottomNodeIndex) =
+                            GetNextStepIndexPositions(j, treeHasReachedWidestPoint, maxNumTreeLevels);
+                        var topTransition = new NodeTransition(transitionProbabilities[i][j][2],
+                                                    resultNodes[i + 1][nextPeriodTopNodeIndex]);
+                        var middleTransition = new NodeTransition(transitionProbabilities[i][j][1],
+                                                    resultNodes[i + 1][nextPeriodMiddleNodeIndex]);
+                        var bottomTransition = new NodeTransition(transitionProbabilities[i][j][0],
+                                                    resultNodes[i + 1][nextPeriodBottomNodeIndex]);
+                        nodeTransitions = new[] { bottomTransition, middleTransition, topTransition };
+                    }
 
                     double nodeSpotPrice = Math.Exp(nodeOuProcessValues[i][j] * spotVolatility + adjustmentTerms[i]);
 
