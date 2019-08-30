@@ -113,14 +113,15 @@ namespace Cmdty.Core.Trees
 
             }
 
-            // Calculate adjustment factor to ensure expected spot price equals current forward price
-            // See Clewlow and Strickland equation 4.10 with discount factor cancelled out
-            var adjustmentTerms = new double[numPeriods];
-            for (int i = 0; i < numPeriods; i++)
+            // Populate results looping backward from end in order to populate transitions from the next time step
+            var resultNodes = new TreeNode[numPeriods][];
+            for (int i = numPeriods - 1; i >= 0; i--)
             {
                 int numPriceLevels = nodeProbabilities[i].Length;
                 int indexAdjustToJ = (numPriceLevels - 1) / 2;
 
+                // Calculate adjustment factor to ensure expected spot price equals current forward price
+                // See Clewlow and Strickland equation 4.10 with discount factor cancelled out
                 double expectedExponentialOfOu = 0;
                 double spotVolatility = spotVolatilityCurve[i];
                 for (int priceLevelIndex = 0; priceLevelIndex < numPriceLevels; priceLevelIndex++)
@@ -129,20 +130,11 @@ namespace Cmdty.Core.Trees
                     double ouProcessValue = treeSpacing * j;
                     expectedExponentialOfOu += nodeProbabilities[i][priceLevelIndex] * Math.Exp(spotVolatility * ouProcessValue);
                 }
+
                 double forwardPrice = forwardCurve[i];
-                adjustmentTerms[i] = Math.Log(forwardPrice / expectedExponentialOfOu);
-            }
+                double adjustmentTerm = Math.Log(forwardPrice / expectedExponentialOfOu);
 
-            // Populate results looping backward from end in order to populate transitions
-            var resultNodes = new TreeNode[numPeriods][];
-
-            // Populate nodes at all other time steps
-            for (int i = numPeriods - 1; i >= 0; i--) // Loop back through time periods
-            {
-                int numPriceLevels = nodeProbabilities[i].Length;
-                int indexAdjustToJ = (numPriceLevels - 1) / 2;
-
-                double spotVolatility = spotVolatilityCurve[i];
+                // Populate tree nodes
                 resultNodes[i] = new TreeNode[numPriceLevels];
                 bool treeHasReachedWidestPoint = numPriceLevels == maxNumTreeLevels;
                 for (int priceLevelIndex = 0; priceLevelIndex < numPriceLevels; priceLevelIndex++) // Loop through price levels
@@ -172,7 +164,7 @@ namespace Cmdty.Core.Trees
                         nodeTransitions = new[] { bottomTransition, middleTransition, topTransition };
                     }
                     double ouProcessValue = treeSpacing * j;
-                    double nodeSpotPrice = Math.Exp(ouProcessValue * spotVolatility + adjustmentTerms[i]);
+                    double nodeSpotPrice = Math.Exp(ouProcessValue * spotVolatility + adjustmentTerm);
 
                     resultNodes[i][priceLevelIndex] = new TreeNode(nodeSpotPrice, nodeProbabilities[i][priceLevelIndex], priceLevelIndex, nodeTransitions);
                 }
