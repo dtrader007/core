@@ -174,6 +174,7 @@ namespace Cmdty.Core.Trees
             var resultNodes = new TreeNode[numPeriods][];
 
             // Populate nodes at end, with no forward transitions
+            // TODO move this into loop below
             int lastPeriodIndex = numPeriods - 1;
             int numLevelsAtEnd = nodeOuProcessValues[lastPeriodIndex].Length;
             resultNodes[lastPeriodIndex] = new TreeNode[numLevelsAtEnd];
@@ -184,7 +185,7 @@ namespace Cmdty.Core.Trees
                 double nodeSpotPrice = Math.Exp(nodeOuProcessValues[lastPeriodIndex][j] * spotVolatilityAtEnd + adjustmentTerms[lastPeriodIndex]);
 
                 resultNodes[lastPeriodIndex][j] = new TreeNode(nodeSpotPrice,
-                        nodeProbabilities[lastPeriodIndex][j], new NodeTransition[0]);
+                        nodeProbabilities[lastPeriodIndex][j], j, new NodeTransition[0]);
             }
 
             // Populate nodes at all other time steps
@@ -205,7 +206,7 @@ namespace Cmdty.Core.Trees
 
                     double nodeSpotPrice = Math.Exp(nodeOuProcessValues[i][j] * spotVolatility + adjustmentTerms[i]);
 
-                    resultNodes[i][j] = new TreeNode(nodeSpotPrice, nodeProbabilities[i][j], nodeTransitions);
+                    resultNodes[i][j] = new TreeNode(nodeSpotPrice, nodeProbabilities[i][j], j, nodeTransitions);
                 }
 
             }

@@ -235,5 +235,19 @@ namespace Cmdty.Core.Trees.Test
             return spotVol * spotVol * (1 - Math.Exp(-2 * MeanReversion * timeToIntegrate)) / 2.0 / MeanReversion;
         }
 
+        [Test]
+        public void CreateTree_TreeNodeValueLevelIndexEqualsIndexInCollection()
+        {
+            TimeSeries<Day, IReadOnlyList<TreeNode>> tree = CreateTestTree();
+
+            foreach ((_, IReadOnlyList<TreeNode> treeNodes) in tree)
+            {
+                for (int i = 0; i < treeNodes.Count; i++)
+                {
+                    Assert.AreEqual(i, treeNodes[i].ValueLevelIndex);
+                }
+            }
+        }
+
     }
 }

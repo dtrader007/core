@@ -27,16 +27,21 @@ using System.Collections.Generic;
 
 namespace Cmdty.Core.Trees
 {
+    /// <summary>
+    /// Represents a node on a recombining tree.
+    /// </summary>
     public sealed class TreeNode
     {
         public double Value { get; }
         public double Probability { get; }
+        public int ValueLevelIndex { get; }
         public IReadOnlyList<NodeTransition> Transitions { get; }
 
-        public TreeNode(double value, double probability, IReadOnlyList<NodeTransition> transitions)
+        public TreeNode(double value, double probability, int valueLevelIndex, IReadOnlyList<NodeTransition> transitions)
         {
             Value = value;
             Probability = probability;
+            ValueLevelIndex = valueLevelIndex;
             Transitions = transitions;
         }
 
@@ -44,7 +49,7 @@ namespace Cmdty.Core.Trees
 
         public override string ToString()
         {
-            return $"{nameof(Value)}: {Value}, {nameof(Probability)}: {Probability}, {nameof(Transitions)}.Count: {Transitions.Count}";
+            return $"{nameof(Value)}: {Value}, {nameof(Probability)}: {Probability}, {nameof(ValueLevelIndex)}: {ValueLevelIndex}, {nameof(Transitions)}.Count: {Transitions.Count}";
         }
 
     }
