@@ -74,10 +74,10 @@ namespace Cmdty.Core.Trees
 
             int maxNumTreeLevels = jMax * 2 + 1;
 
-            var transitionProbabilities = new double[numPeriods][][]; // TODO refactor so transition probabilities aren't calculated for final step
+            var transitionProbabilities = new double[numPeriods - 1][][];
 
             // Calculate OU process levels for tree nodes plus transition probabilities
-            for (int i = 0; i < numPeriods; i++)
+            for (int i = 0; i < numPeriods - 1; i++)
             {
                 int numTreePriceLevels = Math.Min(i * 2 + 1, maxNumTreeLevels);
                 transitionProbabilities[i] = new double[numTreePriceLevels][];
@@ -123,7 +123,6 @@ namespace Cmdty.Core.Trees
                     transitionProbabilities[i][arrayIndex] = new [] {probabilityDown, probabilityMiddle, probabilityUp};
                 }
             }
-            // TODO combine some of these loops through time
 
             // Calculate the probability of reaching each node using forward induction
             var nodeProbabilities = new double[numPeriods][];
@@ -133,7 +132,9 @@ namespace Cmdty.Core.Trees
             for (int i = 0; i < numPeriods - 1; i++) // Loop forward through time
             {
                 int currentStepNumLevels = transitionProbabilities[i].Length;
-                int nextStepNumLevels = transitionProbabilities[i + 1].Length;
+                
+                int nextStepNumLevels = Math.Min((i + 1) * 2 + 1, maxNumTreeLevels);
+                
                 nodeProbabilities[i + 1] = new double[nextStepNumLevels];
                 bool treeHasReachedWidestPoint = currentStepNumLevels == maxNumTreeLevels;
 
