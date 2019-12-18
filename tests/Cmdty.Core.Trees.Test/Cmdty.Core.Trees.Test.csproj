@@ -20,4 +20,8 @@
     <ProjectReference Include="..\..\src\Cmdty.Core.Trees\Cmdty.Core.Trees.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="coverage.cobertura.xml"/>
+  </ItemGroup>
+
 </Project>
