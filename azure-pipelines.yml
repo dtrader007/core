@@ -17,6 +17,10 @@ steps:
       packageType: 'sdk'
       useGlobalJson: true
 
+  - task: NuGetToolInstaller@1
+    inputs:
+      versionSpec: '5.1.0'
+
   - task: PowerShell@2
     displayName: 'Run Cake PowerShell Bootstrapper'
     inputs:
