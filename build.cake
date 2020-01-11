@@ -26,38 +26,7 @@ Task("Clean-Artifacts")
     CleanDirectory(artifactsDirectory);
 });
 
-Task("Add-NuGetSource")
-    .Does(() =>
-    {
-		if (isRunningOnBuildServer)
-		{
-			// Get the access token
-			string accessToken = EnvironmentVariable("SYSTEM_ACCESSTOKEN");
-			if (string.IsNullOrEmpty(accessToken))
-			{
-				throw new InvalidOperationException("Could not resolve SYSTEM_ACCESSTOKEN.");
-			}
-
-			NuGetRemoveSource("Cmdty", "https://pkgs.dev.azure.com/cmdty/_packaging/cmdty/nuget/v3/index.json");
-
-			// Add the authenticated feed source
-			NuGetAddSource(
-				"Cmdty",
-				"https://pkgs.dev.azure.com/cmdty/_packaging/cmdty/nuget/v3/index.json",
-				new NuGetSourcesSettings
-				{
-					UserName = "VSTS",
-					Password = accessToken
-				});
-		}
-		else
-		{
-			Information("Not running on build so no need to add Cmdty NuGet source");
-		}
-    });
-
 Task("Build")
-	.IsDependentOn("Add-NuGetSource")
     .Does(() =>
 {
     var dotNetCoreSettings = new DotNetCoreBuildSettings()
@@ -94,7 +63,6 @@ Task("Test-C#")
 });
 
 Task("Build-Samples")
-    .IsDependentOn("Add-NuGetSource")
 	.Does(() =>
 {
 	var dotNetCoreSettings = new DotNetCoreBuildSettings()
@@ -137,21 +105,6 @@ private string GetAssemblyVersion(string configuration, string workingDirectory)
 	return productVersion;
 }
 
-
-Task("Push-NuGetToCmdtyFeed")
-    .IsDependentOn("Add-NuGetSource")
-    .IsDependentOn("Pack-NuGet")
-    .Does(() =>
-{
-    var nupkgPath = GetFiles(artifactsDirectory.ToString() + "/*.nupkg").Single();
-    Information($"Pushing NuGetPackage in {nupkgPath} to Cmdty feed");
-    NuGetPush(nupkgPath, new NuGetPushSettings 
-    {
-        Source = "Cmdty",
-        ApiKey = "VSTS"
-    });
-});
-
 private string GetEnvironmentVariable(string envVariableName)
 {
     string envVariableValue = EnvironmentVariable(envVariableName);
@@ -185,8 +138,5 @@ else
 
 Task("Default")
 	.IsDependentOn("Pack-NuGet");
-
-Task("CI")
-	.IsDependentOn("Push-NuGetToCmdtyFeed");
 
 RunTarget(target);
