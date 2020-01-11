@@ -92,8 +92,8 @@ Task("Pack-NuGet")
 		}
 	};
 
-    StartProcessThrowOnError("nuget", $"pack Cmdty.Core.nuspec -OutputDirectory {artifactsDirectory.ToString()} -Version {productVersion} -Prop Configuration={configuration}");
-	//NuGetPack("./Cmdty.Core.nuspec", nuGetPackSettings);
+    //StartProcessThrowOnError("nuget", $"pack Cmdty.Core.nuspec -OutputDirectory {artifactsDirectory.ToString()} -Version {productVersion} -Prop Configuration={configuration}");
+	NuGetPack("./Cmdty.Core.nuspec", nuGetPackSettings);
 });	
 
 private void StartProcessThrowOnError(string applicationName, params string[] processArgs)
