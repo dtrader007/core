@@ -9,10 +9,10 @@ var isRunningOnBuildServer = !BuildSystem.IsLocalBuild;
 
 var msBuildSettings = new DotNetCoreMSBuildSettings();
 
-if (HasArgument("BuildNumber"))
+if (HasArgument("PrereleaseNumber"))
 {
-    msBuildSettings.WithProperty("BuildNumber", Argument<string>("BuildNumber"));
-    msBuildSettings.WithProperty("VersionSuffix", nugetPrereleaseTextPart + Argument<string>("BuildNumber"));
+    msBuildSettings.WithProperty("PrereleaseNumber", Argument<string>("PrereleaseNumber"));
+    msBuildSettings.WithProperty("VersionSuffix", nugetPrereleaseTextPart + Argument<string>("PrereleaseNumber"));
 }
 
 if (HasArgument("VersionPrefix"))
