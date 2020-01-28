@@ -1,0 +1,50 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage[round]{natbib}
+\usepackage{url}
+\usepackage{hyperref}
+
+\title{Multi-Factor Commodity Price Process: Spot and Forward Price Simulation}
+\author{Jake C. Fowler}
+\date{January 2020}
+
+\begin{document}
+\newcommand{\+}[1]{\ensuremath{\mathbf{#1}}}
+
+\maketitle
+
+\section{Introduction}
+This document describes a very general multi-factor price process, which is suitable
+use in simulating the spot and forward prices of a a commodity under the risk-neutral
+probability measure.
+
+\bigskip
+
+\begin{equation}
+    \label{eq:forward_sde}
+    \frac{dF(t, T)}{F(t, T)}=\sum_{i=1}^n \sigma_i(T)e^{-\alpha_i(T-t)}dz_i(t)
+\end{equation}
+
+Where $F(t, T)$ is the forward price for delivery at time $T$ observed at time $t$.
+% TODO: 
+% z correlation
+% Reference: Warin, Clewlow and Strickland
+% Describe sigma
+% Describe alpha
+% Give intuition of exponential weighting
+% Fitting to the forward curve
+
+\bigskip
+
+\begin{equation}
+    \label{eq:forward_process_integrated}
+    F(t, T)=
+\end{equation}
+
+\section{Appendices} % TODO look up LaTex Appendix commands
+\subsection{Appendix I - Integration of Forward Price SDE}
+This appendix gives the detailed step for integrated the forward price process
+SDE, hence getting from \ref{eq:forward_sde} to \ref{eq:forward_process_integrated}.
+
+
+\end{document}
