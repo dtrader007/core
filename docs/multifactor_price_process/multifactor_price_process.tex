@@ -53,6 +53,7 @@ Using Ito's Lemma to calculate the stochastic differential of the natural logari
 of the forward price.
 
 \begin{equation}
+    \label{eq:ln_forward_sde}
     d\ln(F(t, T)) = \frac{1}{F(t, T)} dF(t, T) - \frac{1}{2}
         \frac{1}{F(t, T)^2} (dF(t, T))^2
 \end{equation}
@@ -61,8 +62,27 @@ Using the properties of Brownian Motion $(dz(t))^2=dt$ and $dtdz(t)=0$ the forwa
 price differential squared can be evaluated as follows.
 
 \begin{equation}
-    (dF(t, T))^2 = \sum_{i=1}^n \sum_{j=1}^n \sigma_i(T) \sigma_j(T)
+    \label{eq:df_squared}
+    (dF(t, T))^2 = F(t, T)^2 \sum_{i=1}^n \sum_{j=1}^n \sigma_i(T) \sigma_j(T)
     e^{-(\alpha_i + \alpha_j)(T-t)}\rho_{i,j}dt
+\end{equation}
+
+Substituting for $(dF(t, T))^2$ and $dF(t, T)$ in \ref{eq:ln_forward_sde}.
+
+\begin{equation}
+    \label{eq:ln_forward_sde_2}
+    d\ln(F(t, T)) = \sum_{i=1}^n \sigma_i(T)e^{-\alpha_i(T-t)}dz_i(t) - 
+    \frac{1}{2} \sum_{i=1}^n \sum_{j=1}^n \sigma_i(T) \sigma_j(T)
+    e^{-(\alpha_i + \alpha_j)(T-t)}\rho_{i,j}dt
+\end{equation}
+
+The purpose of finding the stochastic differential of $ln(F(t, T))$ is to remove the
+$F(t, T)$ coefficient of the Brownian motions, leaving an SDE which can be integrated
+to a form where the Ito Integrals have non-stochastic integrands, and hence have a normal
+distribution with known mean and variance. Integrating \ref{eq:ln_forward_sde_2}:
+
+\begin{equation}
+    \ln(F(t, T)) = \ln(F(0, t)) + 
 \end{equation}
 
 % Reference Rebonato for integrated covariance
