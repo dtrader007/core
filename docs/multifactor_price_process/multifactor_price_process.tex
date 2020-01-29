@@ -82,8 +82,35 @@ to a form where the Ito Integrals have non-stochastic integrands, and hence have
 distribution with known mean and variance. Integrating \ref{eq:ln_forward_sde_2}:
 
 \begin{equation}
-    \ln(F(t, T)) = \ln(F(0, t)) + 
+    \ln(F(t_2, T)) = \ln(F(t_1, t)) - \frac{1}{2} V(t_1, t_2, T) + I(t_1, t_2, T)
 \end{equation}
+
+Where:
+
+\begin{eqnarray}
+    \nonumber
+    V(t_1, t_2, T) =  \sum_{i=1}^n \sigma_i(T) \sum_{j=1}^n 
+    \sigma_j(T) \rho_{i,j} \int_{t_1}^{t_2} e^{-(\alpha_i + \alpha_j)(T-u)} du\\
+    \nonumber
+    = \sum_{i=1}^n \sigma_i(T) \sum_{j=1}^n \sigma_j(T) \rho_{i,j} 
+    \frac{1}{\alpha_i + \alpha_j} (e^{-(\alpha_i + \alpha_j)(T-t_2)} - 
+    e^{-(\alpha_i + \alpha_j)(T-t_1)}) \\
+    \nonumber
+\end{eqnarray}
+
+And: % TODO why does above equation not have number, but below one does?
+
+\begin{equation}
+    I(t_1, t_2, T) = \sum_{i=1}^n \sigma_i(T) \int_{t_1}^{t_2} e^{-\alpha_i(T-u)}dz_i(u)
+\end{equation}
+
+Hence the forward price can be expressed as:
+
+\begin{equation}
+    F(t_2, T) = F(t_1, t)e^{- \frac{1}{2} V(t_1, t_2, T) + I(t_1, t_2, T)}
+\end{equation}
+
+% TODO define case where alpha 1 and 2 are both zero
 
 % Reference Rebonato for integrated covariance
 
