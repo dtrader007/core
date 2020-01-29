@@ -1,5 +1,6 @@
 \documentclass{article}
 \usepackage{amsmath}
+\usepackage{amssymb} % for "\mathbb" macro
 \usepackage[round]{natbib}
 \usepackage{url}
 \usepackage{hyperref}
@@ -37,9 +38,29 @@ starting at time $T$.
 
 \bigskip
 
+Integrating this SDE (see Appendix I):
+
 \begin{equation}
     \label{eq:forward_process_integrated}
-    F(t, T)=
+    F(t_2, T) = F(t_1, t)e^{- \frac{1}{2} V(t_1, t_2, T) + I(t_1, t_2, T)}
+\end{equation}
+
+\bigskip
+
+A closed form expression exists for the integrated covariances of
+forward price log returns. This is derived in Appendix II. The evaluation of such 
+covariances is essential to
+understand the statistical properties that the model implies for the dynamics of 
+the forward curve. It also allows the calibration of model parameters to option
+market implied volatilities and historical covariances. 
+Defining $C(t_1, t_2, T_1, T_2)$
+as the integrated covariance from $t_1$ to $t_2$, between the log returns of forward 
+contracts delivering on respective periods starting on $T_1$ and $T_2$.
+
+\begin{equation}
+    C(t_1, t_2, T_1, T_2) = \sum_{i=1}^n \sigma_i(T) \sum_{j=1}^n \sigma_j(T) \rho_{i,j} 
+    e^{-\alpha_i T_1 -\alpha_j T_2} \frac{1}{\alpha_i + \alpha_j}
+    (e^{t_2(\alpha_i + \alpha_j)} - e^{t_1(\alpha_i + \alpha_j)} )
 \end{equation}
 
 \section{Appendices} % TODO look up LaTex Appendix commands
@@ -112,6 +133,37 @@ Hence the forward price can be expressed as:
 
 % TODO define case where alpha 1 and 2 are both zero
 
-% Reference Rebonato for integrated covariance
+
+\subsection{Appendix II - Forward Covariances}
+% TODO Reference Rebonato for integrated covariance
+This section derives a closed form expression for the integrated covariances of
+forward price log returns. Defining $C(t_1, t_2, T_1, T_2)$
+as the integrated covariance from $t_1$ to $t_2$, between the log returns of forward 
+contracts delivering on respective periods starting on $T_1$ and $T_2$.
+
+\begin{equation}
+    C(t_1, t_2, T_1, T_2) = \mathbb{E}\biggl[\ln\biggl(\frac{F(t_2, T_1)}{F(t_1, T_1)} \biggr) 
+    \ln\biggl(\frac{F(t_2, T_2)}{F(t_1, T_2)} \biggr) \biggr] \\
+\end{equation}
+
+Remove the products of stochastic and deterministic terms, as they will equal zero:
+
+\begin{equation}
+    C(t_1, t_2, T_1, T_2) = \mathbb{E}\bigl[ I(t_1, t_2, T_1) I(t_1, t_2, T_2) \bigr] 
+\end{equation}
+
+Using the known properties of Ito Integrals:
+% TODO put in equation with expection of Ito product inside summation?
+
+\begin{eqnarray}
+    \nonumber
+    C(t_1, t_2, T_1, T_2) = \sum_{i=1}^n \sigma_i(T) \sum_{j=1}^n 
+    \sigma_j(T) \rho_{i,j} e^{-\alpha_i T_1 -\alpha_j T_2} 
+    \int_{t_1}^{t_2} e^{u(\alpha_i + \alpha_j)} du \\
+    = \sum_{i=1}^n \sigma_i(T) \sum_{j=1}^n \sigma_j(T) \rho_{i,j} 
+    e^{-\alpha_i T_1 -\alpha_j T_2} \frac{1}{\alpha_i + \alpha_j}
+    (e^{t_2(\alpha_i + \alpha_j)} - e^{t_1(\alpha_i + \alpha_j)} )
+\end{eqnarray}
+
 
 \end{document}
