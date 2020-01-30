@@ -178,20 +178,20 @@ and $F(t, t)$ and equation \ref{eq:forward_process_integrated}:
 \end{equation}
 
 When simulating a spot price path it is necessary to know the relationship between
-$S(t_2)$ and $S(t_1)$, where $t_2 > t_1$. Defining $V_s(t)=V(0, t, t)$ and 
+$S(t_k)$ and $S(t_{k-1})$, where $0 \leq t_{k-1} < t_k$. Defining $V_s(t)=V(0, t, t)$ and 
 $I_s(t)=I(0, t, t)$:
 
 \begin{equation}
-    S(t_2) = S(t_1) \frac{F(0, t_2)}{F(0, t_1)} e^{- \frac{1}{2} (V_s(t_2) - 
-    V_s(t_1)) + I_s(t_2) - I_s(t_1)}
+    S(t_k) = S(t_{k-1}) \frac{F(0, t_k)}{F(0, t_{k-1})} e^{- \frac{1}{2} (V_s(t_k) - 
+    V_s(t_{k-1})) + I_s(t_k) - I_s(t_{k-1})}
 \end{equation}
 
-Focussing on the stochastic term $I_s(t_2) - I_s(t_1)$:
+Focussing on the stochastic term $I_s(t_k) - I_s(t_{k-1})$:
 
 \begin{equation}
-    I_s(t_2) - I_s(t_1) = \sum_{i=1}^n \biggl( \sigma_i(t_2) 
-    \int_0^{t_2} e^{-\alpha_i(t_2-u)} dz_i(u) - \sigma_i(t_1) 
-    \int_0^{t_1} e^{-\alpha_i(t_1-u)} dz_i(u) \biggr)
+    I_s(t_k) - I_s(t_{k-1}) = \sum_{i=1}^n \biggl( \sigma_i(t_k) 
+    \int_0^{t_k} e^{-\alpha_i(t_k-u)} dz_i(u) - \sigma_i(t_{k-1}) 
+    \int_0^{t_{k-1}} e^{-\alpha_i(t_{k-1}-u)} dz_i(u) \biggr)
 \end{equation}
 
 Defining:
@@ -203,37 +203,66 @@ Defining:
 Substitution this into the above equation:
 
 \begin{equation}
-    I_s(t_2) - I_s(t_1) = \sum_{i=1}^n \biggl( \sigma_i(t_2) 
-    F_i(t_2) - \sigma_i(t_1) F_i(t_1) \biggr)
+    I_s(t_k) - I_s(t_{k-1}) = \sum_{i=1}^n \biggl( \sigma_i(t_k) 
+    F_i(t_k) - \sigma_i(t_{k-1}) F_i(t_{k-1}) \biggr)
 \end{equation}
 
 
-When simulating, this expression will be adaped to the filtration $\mathcal{F}_{t_1}$, hence the
-$F_i(t_1)$ will have been realised. $F_i(t_2)$ will be part realised, hence it is instructive
-to split this into it's deterministic and stochastic parts, as of $t_1$. First making the
-substituting $t_2 = t_1 + t_2 - t_1$:
+When simulating, this expression will be adaped to the filtration $\mathcal{F}_{t_{k-1}}$, hence the
+$F_i(t_{k-1})$ will have been realised. $F_i(t_k)$ will be part realised, hence it is instructive
+to split this into it's deterministic and stochastic parts, as of $t_{k-1}$. First making the
+substituting $t_k = t_{k-1} + t_k - t_{k-1}$:
 
 \begin{eqnarray}
     \nonumber
-    F_i(t_2) = e^{-\alpha_i(t_2 - t_1)} \int_0^{t_2} e^{-\alpha_i(t_1-u)} dz_i(u) \\
-        = e^{-\alpha_i(t_2 - t_1)} \biggl(\int_0^{t_1} e^{-\alpha_i(t_1-u)} dz_i(u) +
-        \int_{t_1}^{t_2} e^{-\alpha_i(t_1-u)} dz_i(u) \biggr)
+    F_i(t_k) = e^{-\alpha_i(t_k - t_{k-1})} \int_0^{t_k} e^{-\alpha_i(t_{k-1}-u)} dz_i(u) \\
+        = e^{-\alpha_i(t_k - t_{k-1})} \biggl(\int_0^{t_{k-1}} e^{-\alpha_i(t_{k-1}-u)} dz_i(u) +
+        \int_{t_{k-1}}^{t_k} e^{-\alpha_i(t_{k-1}-u)} dz_i(u) \biggr)
 \end{eqnarray}
 
-Noticing that the first integral is the definition of $F_i(t_1)$, the function $F_i$ can
+Noticing that the first integral is the definition of $F_i(t_{k-1})$, the function $F_i$ can
 be defined recursively:
 
 \begin{equation}
-    F_i(t_2) = e^{-\alpha_i(t_2 - t_1)}F_i(t_1) + \int_{t_1}^{t_2} e^{-\alpha_i(t_2-u)} dz_i(u)
+    F_i(t_k) = e^{-\alpha_i(t_k - t_{k-1})}F_i(t_{k-1}) + \int_{t_{k-1}}^{t_k} e^{-\alpha_i(t_k-u)} dz_i(u)
 \end{equation}
 
-For any $t_2 > t_1$ and:
+For any $t_k > t_{k-1}$ and base case:
 
 \begin{equation}
     F_i(0) = 0
 \end{equation}
 
-In this form $F_i(t)$ can be recognised as an Ornstein–Uhlenbeck process with zero drift
-and mean reversion parameter $\alpha_i$.
+In this form $F_i(t)$ can be recognised as an Ornstein–Uhlenbeck process with zero drift,
+mean reversion parameter $\alpha_i$, and $\sigma$ (coeffient of Brownian motion) of 1.
+
+\bigskip
+
+When simulating the spot price for an increasing sequence of $n$
+times $t_{k-1}, t_2 \hdots t_{n-1}, t_n$ where $0 < t_{k-1} < t_k$, for each of these
+times the first step is to calculate $F_i(t_k)$ recursively, using the above relationship % TODO word better (maybe equation ref)
+for $i = 1, \hdots, n$.
+
+\begin{equation}
+    F_i(t_k) = e^{-\alpha_i(t_k - t_{k-1})}F_i(t_{k-1}) + Z_i(t_k)
+\end{equation}
+
+Where, using the property of Ito Integrals $Z_i(t_k)$ is multivariate normally 
+distributed, with mean zero and covariance:
+
+\begin{equation}
+    cov(Z_i, Z_j) = \frac{\rho_{i, j}}{\alpha_i + \alpha_j}(1 - 
+    e^{-(\alpha_i + \alpha_j)(t_k - t_{k-1})})
+\end{equation}
+
+The spot price can then be calculated from the values of $F_i(t_k)$:
+
+\begin{equation}
+    S(t_k) = S(t_{k-1}) \frac{F(0, t_k)}{F(0, t_{k-1})} e^{- \frac{1}{2} (V_s(t_k) - 
+    V_s(t_{k-1})) + \sum_{i=1}^n \bigl(\sigma_i(t_k)F_i(t_k) - \sigma_i(t_{k-1})F_i(t_{k-1})\bigr)}
+\end{equation}
+
+
+% TODO significance of F as factor for Markovian
 
 \end{document}
