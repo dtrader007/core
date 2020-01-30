@@ -1,5 +1,6 @@
 \documentclass{article}
 \usepackage{amsmath}
+\usepackage{mathrsfs}
 \usepackage{amssymb} % for "\mathbb" macro
 \usepackage[round]{natbib}
 \usepackage{url}
@@ -28,7 +29,9 @@ probability measure.
 
 Where $F(t, T)$ is the forward price observed at time $t$, for delivery over the period
 starting at time $T$.
-% TODO: 
+% TODO: make comments about properties of model
+% Lognormal (not accurate for some commodities which can go negative in price)
+% Lognormal also means that vol smile isn't taken into account
 % z correlation
 % Reference: Warin, Clewlow and Strickland
 % Describe sigma
@@ -165,5 +168,72 @@ Using the known properties of Ito Integrals:
     (e^{t_2(\alpha_i + \alpha_j)} - e^{t_1(\alpha_i + \alpha_j)} )
 \end{eqnarray}
 
+\subsection{Appendix III - Spot Price Process}
+Defining the spot price $S(t)$ as the price for delivery of the commodity in the period
+starting at time $t$, observed at time $t$. Using the equivalence between $S(t)$
+and $F(t, t)$ and equation \ref{eq:forward_process_integrated}:
+
+\begin{equation}
+    S(t) = F(0, t)e^{- \frac{1}{2} V(0, t, t) + I(0, t, t)}
+\end{equation}
+
+When simulating a spot price path it is necessary to know the relationship between
+$S(t_2)$ and $S(t_1)$, where $t_2 > t_1$. Defining $V_s(t)=V(0, t, t)$ and 
+$I_s(t)=I(0, t, t)$:
+
+\begin{equation}
+    S(t_2) = S(t_1) \frac{F(0, t_2)}{F(0, t_1)} e^{- \frac{1}{2} (V_s(t_2) - 
+    V_s(t_1)) + I_s(t_2) - I_s(t_1)}
+\end{equation}
+
+Focussing on the stochastic term $I_s(t_2) - I_s(t_1)$:
+
+\begin{equation}
+    I_s(t_2) - I_s(t_1) = \sum_{i=1}^n \biggl( \sigma_i(t_2) 
+    \int_0^{t_2} e^{-\alpha_i(t_2-u)} dz_i(u) - \sigma_i(t_1) 
+    \int_0^{t_1} e^{-\alpha_i(t_1-u)} dz_i(u) \biggr)
+\end{equation}
+
+Defining:
+
+\begin{equation}
+    F_i(t) = \int_0^{t} e^{-\alpha_i(t-u)} dz_i(u)
+\end{equation}
+
+Substitution this into the above equation:
+
+\begin{equation}
+    I_s(t_2) - I_s(t_1) = \sum_{i=1}^n \biggl( \sigma_i(t_2) 
+    F_i(t_2) - \sigma_i(t_1) F_i(t_1) \biggr)
+\end{equation}
+
+
+When simulating, this expression will be adaped to the filtration $\mathcal{F}_{t_1}$, hence the
+$F_i(t_1)$ will have been realised. $F_i(t_2)$ will be part realised, hence it is instructive
+to split this into it's deterministic and stochastic parts, as of $t_1$. First making the
+substituting $t_2 = t_1 + t_2 - t_1$:
+
+\begin{eqnarray}
+    \nonumber
+    F_i(t_2) = e^{-\alpha_i(t_2 - t_1)} \int_0^{t_2} e^{-\alpha_i(t_1-u)} dz_i(u) \\
+        = e^{-\alpha_i(t_2 - t_1)} \biggl(\int_0^{t_1} e^{-\alpha_i(t_1-u)} dz_i(u) +
+        \int_{t_1}^{t_2} e^{-\alpha_i(t_1-u)} dz_i(u) \biggr)
+\end{eqnarray}
+
+Noticing that the first integral is the definition of $F_i(t_1)$, the function $F_i$ can
+be defined recursively:
+
+\begin{equation}
+    F_i(t_2) = e^{-\alpha_i(t_2 - t_1)}F_i(t_1) + \int_{t_1}^{t_2} e^{-\alpha_i(t_2-u)} dz_i(u)
+\end{equation}
+
+For any $t_2 > t_1$ and:
+
+\begin{equation}
+    F_i(0) = 0
+\end{equation}
+
+In this form $F_i(t)$ can be recognised as an Ornstein–Uhlenbeck process with zero drift
+and mean reversion parameter $\alpha_i$.
 
 \end{document}
