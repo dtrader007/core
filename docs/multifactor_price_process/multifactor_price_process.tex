@@ -35,9 +35,6 @@ probability measure.
     \sigma_i : \mathbb{R}_{\ge 0} \rightarrow \mathbb{R}
 \end{align}
 
-% TODO in the above equation:
-% Define sigma function
-% Range of T (make sure it's clear that this is discrete)
 
 Where $z_i(t)$ follow correlated Wiener processes with correlation $\rho_{i, j}$, i.e.
 
@@ -62,7 +59,7 @@ starting at time $T$. The following observations can be made about this model.
         (e.g. a stochastic volatility model) and price a relativeley simple product like an 
         Asian option. Maybe the model is suitable as part of a more complex model for 
         optimising a physical oil asset such as an oil refinery, where the 
-        practical implementation of the optimisation algorithm is only possible with a relativeley
+        practical implementation of the optimisation algorithm is only possible with a relatively
         simple deterministic volatilities model such as this one. A similar reasoning
         could be used to jusfify the suitability for use for pricing gas storage, swing, and
         power generation assets, as these require complex optimisation. But the reason would
@@ -78,15 +75,31 @@ starting at time $T$. The following observations can be made about this model.
     is equal to the equivalent point on the initial curve. This makes the model suitable
     for use assuming the risk-neutral probability measure with deterministic interest
     rates.
-    \item $\sigma_i(T)$ is the maturity dependent vo
+    \item There are $n$ sources of uncertainty for which the effect on $F(t, T)$
+    depends on the following parameters:
+    \begin{itemize}
+        \item The impact of each factor's movement on forward prices decays exponentially
+        with time to maturity (i.e. $T-t$) with the $\alpha_i$ parameter determining the
+        rate of this decay. A higher $\alpha_i$ results in a more rapid decay, and the minimum
+        possible value of zero for $\alpha_i$ means that the $i^\text{th}$ factor result in 
+        non-decaying parrallel shifts in the whole forward curve, before the $\sigma_i(T)$ 
+        parameter is taken into account. As the derivation of the spot price process shows
+        below, in terms of spot price dynamics $\alpha_i$ translates to the mean reversion 
+        rate of the $i^\text{th}$ stochastic factor driving the spot price.
+        \item $\sigma_i$ is an arbitray maturity dependent volatility function. This parameter
+        can be used to control seasonality in the volatility and correlation of the forward
+        prices. For example a $\sigma_i$ function which only returns non-zero values for $T$
+        which are in the Winter delivery periods would make the $i^\text{th}$ factor only
+        drive Winter forward prices. $\sigma_i$ could also be used during parameter calibration
+        to impose a scaling factor such that the model exactly matches at-the-money implied
+        volatilities.
+%        TODO mention Rebonato p673 (although this is LMM model)
+    \end{itemize}
 \end{itemize}
 
 % TODO: make comments about properties of model
 % Reference: Warin, Clewlow and Strickland
-% Describe sigma
-% Describe alpha
 % Constraints: alpha is >= 0, sigma can be positive or negative
-% Give intuition of exponential weighting
 
 \bigskip
 
