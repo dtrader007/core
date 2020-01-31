@@ -63,8 +63,7 @@ contracts delivering on respective periods starting on $T_1$ and $T_2$.
 
 \begin{equation}
     C(t_1, t_2, T_1, T_2) = \sum_{i=1}^n \sigma_i(T) \sum_{j=1}^n \sigma_j(T) \rho_{i,j} 
-    e^{-\alpha_i T_1 -\alpha_j T_2} \frac{1}{\alpha_i + \alpha_j}
-    (e^{t_2(\alpha_i + \alpha_j)} - e^{t_1(\alpha_i + \alpha_j)} )
+    e^{-\alpha_i T_1 -\alpha_j T_2} \vartheta_{-t_1, -t_2}(\alpha_i + \alpha_j)
 \end{equation}
 
 \section{Appendices} % TODO look up LaTex Appendix commands
@@ -136,33 +135,44 @@ case to be allowed. Consider the function $\psi$ which is only defined for
 the domain $\mathbb{R}_{\ne 0}$, the set real numbers, excluding zero.
 
 \begin{equation}
-    \psi(x) = \frac{e^{-x(T-t_2)} - e^{-x(T-t_1)}}{x} \quad  x \in \mathbb{R}_{\ne 0}
+    \psi_{c_1, c_2}(x) = \frac{e^{-x c_2} - e^{-x c_1}}{x} \quad  x \in \mathbb{R}_{\ne 0}
 \end{equation}
 
 The first step to defining the continous extension is to write $\psi$ as a Taylor Series
 about zero.
 
 \begin{equation}
-    \psi(x) = \frac{1 - x(T-t_2) - 1 + x(T - t_1) + O(x^2)}{x}
+    \psi_{c_1, c_2}(x) = \frac{1 - x c_2 - 1 + x c_1 + O(x^2)}{x}
 \end{equation}
 
 Taking the limit of $\psi(x)$ towards zero, the $O(x^2)$ becomes negligible, hence:
 
 \begin{eqnarray}
     \nonumber
-    \lim_{x \to 0} \psi(x) = \frac{1 - x(T-t_2) - 1 + x(T - t_1)}{x} \\
-    = t_2 - t_1
+    \lim_{x \to 0} \psi_{c_1, c_2}(x) = \frac{1 - x c_2 - 1 + x c_1}{x} \\
+    = c_1 - c_2
 \end{eqnarray}
 
 Using this, we can define $\vartheta$ as the continous extension of $\psi$:
 
 \begin{align}
-    \vartheta(x) = 
+    \vartheta_{c_1, c_2}(x) = 
     \begin{cases}
-        \psi(x) & \text{for} \quad x \in \mathbb{R}_{\ne 0} \\
+        \psi_{c_1, c_2}(x) & \text{for} \quad x \in \mathbb{R}_{\ne 0} \\
+        c_1 - c_2 & \text{for} \quad x=0
+    \end{cases}
+\end{align}
+
+Which in the case of equation for V is:
+
+\begin{align}
+    \vartheta_{T-t_1, T-t_2}(x) = 
+    \begin{cases}
+        \psi_{T-t_1, T-t_2}(x) & \text{for} \quad x \in \mathbb{R}_{\ne 0} \\
         t_2 - t_1 & \text{for} \quad x=0
     \end{cases}
 \end{align}
+
 
 \bigskip
 
@@ -172,7 +182,7 @@ $\alpha_j$ both being equal to zero:
 \begin{equation}
     \nonumber
     V(t_1, t_2, T) = \sum_{i=1}^n \sigma_i(T) \sum_{j=1}^n \sigma_j(T) \rho_{i,j} 
-    \vartheta(\alpha_i + \alpha_j)
+    \vartheta_{T-t_1, T-t_2}(\alpha_i + \alpha_j)
 \end{equation}
 
 Hence the forward price can be expressed as:
@@ -180,9 +190,6 @@ Hence the forward price can be expressed as:
 \begin{equation}
     F(t_2, T) = F(t_1, t)e^{- \frac{1}{2} V(t_1, t_2, T) + I(t_1, t_2, T)}
 \end{equation}
-
-% TODO define case where alpha 1 and 2 are both zero
-
 
 \subsection{Appendix II - Forward Covariances}
 % TODO Reference Rebonato for integrated covariance
@@ -214,6 +221,16 @@ Using the known properties of Ito Integrals:
     e^{-\alpha_i T_1 -\alpha_j T_2} \frac{1}{\alpha_i + \alpha_j}
     (e^{t_2(\alpha_i + \alpha_j)} - e^{t_1(\alpha_i + \alpha_j)} )
 \end{eqnarray}
+
+Allowing for the case of $\alpha_i$ and $\alpha_j$ both being equal to zero, 
+as in the previous appendix, a continuous extension is made to redefine the function
+$C$:
+
+\begin{equation}
+    C(t_1, t_2, T_1, T_2) = \sum_{i=1}^n \sigma_i(T) \sum_{j=1}^n \sigma_j(T) \rho_{i,j} 
+    e^{-\alpha_i T_1 -\alpha_j T_2} \vartheta_{-t_1, -t_2}(\alpha_i + \alpha_j)
+\end{equation}
+
 
 \subsection{Appendix III - Spot Price Process}
 Defining the spot price $S(t)$ as the price for delivery of the commodity in the period
