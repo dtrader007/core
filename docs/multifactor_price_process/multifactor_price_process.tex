@@ -36,6 +36,7 @@ starting at time $T$.
 % Reference: Warin, Clewlow and Strickland
 % Describe sigma
 % Describe alpha
+% Constraints: alpha is >= 0, sigma can be positive or negative
 % Give intuition of exponential weighting
 % Fitting to the forward curve
 
@@ -112,20 +113,66 @@ distribution with known mean and variance. Integrating \ref{eq:ln_forward_sde_2}
 Where:
 
 \begin{eqnarray}
+    \label{eq:forward_drift_adjust}
     \nonumber
     V(t_1, t_2, T) =  \sum_{i=1}^n \sigma_i(T) \sum_{j=1}^n 
     \sigma_j(T) \rho_{i,j} \int_{t_1}^{t_2} e^{-(\alpha_i + \alpha_j)(T-u)} du\\
-    \nonumber
     = \sum_{i=1}^n \sigma_i(T) \sum_{j=1}^n \sigma_j(T) \rho_{i,j} 
     \frac{1}{\alpha_i + \alpha_j} (e^{-(\alpha_i + \alpha_j)(T-t_2)} - 
     e^{-(\alpha_i + \alpha_j)(T-t_1)}) \\
     \nonumber
 \end{eqnarray}
 
-And: % TODO why does above equation not have number, but below one does?
+And:
 
 \begin{equation}
     I(t_1, t_2, T) = \sum_{i=1}^n \sigma_i(T) \int_{t_1}^{t_2} e^{-\alpha_i(T-u)}dz_i(u)
+\end{equation}
+
+\bigskip
+There is a problem in that $V(t_1, t_2, T)$ is not defined for the case where 
+$\alpha_i + \alpha_j = 0$. A continuous extension is required in order for this
+case to be allowed. Consider the function $\psi$ which is only defined for 
+the domain $\mathbb{R}_{\ne 0}$, the set real numbers, excluding zero.
+
+\begin{equation}
+    \psi(x) = \frac{e^{-x(T-t_2)} - e^{-x(T-t_1)}}{x} \quad  x \in \mathbb{R}_{\ne 0}
+\end{equation}
+
+The first step to defining the continous extension is to write $\psi$ as a Taylor Series
+about zero.
+
+\begin{equation}
+    \psi(x) = \frac{1 - x(T-t_2) - 1 + x(T - t_1) + O(x^2)}{x}
+\end{equation}
+
+Taking the limit of $\psi(x)$ towards zero, the $O(x^2)$ becomes negligible, hence:
+
+\begin{eqnarray}
+    \nonumber
+    \lim_{x \to 0} \psi(x) = \frac{1 - x(T-t_2) - 1 + x(T - t_1)}{x} \\
+    = t_2 - t_1
+\end{eqnarray}
+
+Using this, we can define $\vartheta$ as the continous extension of $\psi$:
+
+\begin{align}
+    \vartheta(x) = 
+    \begin{cases}
+        \psi(x) & \text{for} \quad x \in \mathbb{R}_{\ne 0} \\
+        t_2 - t_1 & \text{for} \quad x=0
+    \end{cases}
+\end{align}
+
+\bigskip
+
+Using this, we can redefine $V(t_1, t_2, T)$ to include the case of $\alpha_i$ and
+$\alpha_j$ both being equal to zero:
+
+\begin{equation}
+    \nonumber
+    V(t_1, t_2, T) = \sum_{i=1}^n \sigma_i(T) \sum_{j=1}^n \sigma_j(T) \rho_{i,j} 
+    \vartheta(\alpha_i + \alpha_j)
 \end{equation}
 
 Hence the forward price can be expressed as:
@@ -264,5 +311,6 @@ The spot price can then be calculated from the values of $F_i(t_k)$:
 
 
 % TODO significance of F as factor for Markovian
+% TODO make multi-commodity
 
 \end{document}
