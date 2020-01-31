@@ -22,10 +22,22 @@ probability measure.
 
 \bigskip
 
-\begin{equation}
+\begin{align}
     \label{eq:forward_sde}
-    \frac{dF(t, T)}{F(t, T)}=\sum_{i=1}^n \sigma_i(T)e^{-\alpha_i(T-t)}dz_i(t)
-\end{equation}
+    \frac{dF(t, T)}{F(t, T)}=\sum_{i=1}^n \sigma_i(T)e^{-\alpha_i(T-t)}dz_i(t) \\
+    \nonumber
+    \alpha_i \in \mathbb{R}_{\ge 0} \\
+    \nonumber
+    t \in \mathbb{R}_{\ge 0} \\
+    \nonumber
+    T \in \{ T_0, T_1, T_2, \hdots | T_j \ge t  \} \\
+    \nonumber
+    \sigma_i : \mathbb{R}_{\ge 0} \rightarrow \mathbb{R}
+\end{align}
+
+% TODO in the above equation:
+% Define sigma function
+% Range of T (make sure it's clear that this is discrete)
 
 Where $z_i(t)$ follow correlated Wiener processes with correlation $\rho_{i, j}$, i.e.
 
@@ -47,7 +59,16 @@ starting at time $T$. The following observations can be made about this model.
         suitable for pricing Asian options on Brent crude oil as the vanilla options market
         is liquid enough to be able to extract a volatility surface (i.e. implied volatility
         by expiry and maturity) in order to calibrate a model to take the surface into account
-        (e.g. a stochastic volatility model)
+        (e.g. a stochastic volatility model) and price a relativeley simple product like an 
+        Asian option. Maybe the model is suitable as part of a more complex model for 
+        optimising a physical oil asset such as an oil refinery, where the 
+        practical implementation of the optimisation algorithm is only possible with a relativeley
+        simple deterministic volatilities model such as this one. A similar reasoning
+        could be used to jusfify the suitability for use for pricing gas storage, swing, and
+        power generation assets, as these require complex optimisation. But the reason would
+        be even more compelling for such assets as, in many Europe markets, vanilla options
+        markets either do not exist, or are not liquid enough to reliably calibrate a
+        stochastic volatility model.
         \item The price of some commodities can occasionally go negative, for example
         power and natural gas. Whether this model is suitable depends on the frequency
         of such negative price occurances, and whether the use of the model is impacted
@@ -56,11 +77,11 @@ starting at time $T$. The following observations can be made about this model.
     \item The model is fitted to the forward curve in that the expected spot price 
     is equal to the equivalent point on the initial curve. This makes the model suitable
     for use assuming the risk-neutral probability measure with deterministic interest
-    rates. 
+    rates.
+    \item $\sigma_i(T)$ is the maturity dependent vo
 \end{itemize}
 
 % TODO: make comments about properties of model
-% Lognormal also means that vol smile isn't taken into account
 % Reference: Warin, Clewlow and Strickland
 % Describe sigma
 % Describe alpha
