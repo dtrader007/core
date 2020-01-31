@@ -27,18 +27,45 @@ probability measure.
     \frac{dF(t, T)}{F(t, T)}=\sum_{i=1}^n \sigma_i(T)e^{-\alpha_i(T-t)}dz_i(t)
 \end{equation}
 
-Where $F(t, T)$ is the forward price observed at time $t$, for delivery over the period
-starting at time $T$.
+Where $z_i(t)$ follow correlated Wiener processes with correlation $\rho_{i, j}$, i.e.
+
+\begin{equation}
+    \mathbb{E}[dz_i(t)dz_j(t)] = \rho_{i, j}dt
+\end{equation}
+
+$F(t, T)$ is the forward price observed at time $t$, for delivery over the period
+starting at time $T$. The following observations can be made about this model.
+
+\begin{itemize}
+    \item Forward prices are lognormally distributed, which has the following practical
+    considerations: 
+    \begin{itemize}
+        \item The model doesn't take into account volatility smile. This assumption is
+        fine for the situation of there not being a liquid market in vanilla 
+        options and/or the model is being used for a complex product which isn't sensitive
+        to changes in the shape of the skew surface. For example this model probably isn't
+        suitable for pricing Asian options on Brent crude oil as the vanilla options market
+        is liquid enough to be able to extract a volatility surface (i.e. implied volatility
+        by expiry and maturity) in order to calibrate a model to take the surface into account
+        (e.g. a stochastic volatility model)
+        \item The price of some commodities can occasionally go negative, for example
+        power and natural gas. Whether this model is suitable depends on the frequency
+        of such negative price occurances, and whether the use of the model is impacted
+        by this.
+    \end{itemize}
+    \item The model is fitted to the forward curve in that the expected spot price 
+    is equal to the equivalent point on the initial curve. This makes the model suitable
+    for use assuming the risk-neutral probability measure with deterministic interest
+    rates. 
+\end{itemize}
+
 % TODO: make comments about properties of model
-% Lognormal (not accurate for some commodities which can go negative in price)
 % Lognormal also means that vol smile isn't taken into account
-% z correlation
 % Reference: Warin, Clewlow and Strickland
 % Describe sigma
 % Describe alpha
 % Constraints: alpha is >= 0, sigma can be positive or negative
 % Give intuition of exponential weighting
-% Fitting to the forward curve
 
 \bigskip
 
