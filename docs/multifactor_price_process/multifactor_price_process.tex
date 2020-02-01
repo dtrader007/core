@@ -43,7 +43,20 @@ Where $z_i(t)$ follow correlated Wiener processes with correlation $\rho_{i, j}$
 \end{equation}
 
 $F(t, T)$ is the forward price observed at time $t$, for delivery over the period
-starting at time $T$. The following observations can be made about this model.
+starting at time $T$.
+
+\bigskip
+
+This model is almost a specific case of the general multi-factor model presented
+in \cite{Clewlow}, except that the cited paper assumes the driving stochastic factors
+are uncorrelated Brownian motions, whereas the model presented here uses correlated
+Brownian motions.
+The model is also similar to that presented in \cite{Warin} except that the $\sigma_i$
+volatility in this model is a function of forward maturity date $T$, rather than
+ovservation date $t$ in \cite{Warin}.
+
+\bigskip
+The following observations can be made about this model:
 
 \begin{itemize}
     \item Forward prices are lognormally distributed, which has the following practical
@@ -390,5 +403,8 @@ The spot price can then be calculated from the values of $F_i(t_k)$:
 
 % TODO significance of F as factor for Markovian
 % TODO make multi-commodity
+
+\bibliographystyle{plainnat}
+\bibliography{multifactor_price_process}
 
 \end{document}
