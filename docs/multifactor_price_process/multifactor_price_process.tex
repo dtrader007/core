@@ -16,11 +16,12 @@
 \maketitle
 
 \section{Introduction}
-This document describes a very general multi-factor price process, which is suitable
-use in simulating the spot and forward prices of a a commodity under the risk-neutral
-probability measure.
+This document describes a very general multi-factor commodity price process model,
+together with some analytical results which can be used to explore the assumed
+price dynamics, and simulate prices computationally when performing a Monte-Carlo
+simulation.
 
-\bigskip
+\subsection{Model SDE}
 
 \begin{align}
     \label{eq:forward_sde}
@@ -45,17 +46,24 @@ Where $z_i(t)$ follow correlated Wiener processes with correlation $\rho_{i, j}$
 $F(t, T)$ is the forward price observed at time $t$, for delivery over the period
 starting at time $T$.
 
-\bigskip
+\subsection{Comparison With Other Models}
 
 This model is almost a specific case of the general multi-factor model presented
-in \cite{Clewlow}, except that the cited paper assumes the driving stochastic factors
+in \cite{Clewlow}, which instead of a coefficient of the Brownian motion of
+$\sigma_i(T)e^{-\alpha_i(T-t)}$ presented here, uses the more general form
+$\sigma_i(t, T)$. As results presented below show, the advantage of the form
+used in this paper is that the future distribution of forward and spot prices
+can be derived analyticallly. Another difference is that the cited paper assumes the driving stochastic factors
 are uncorrelated Brownian motions, whereas the model presented here uses correlated
 Brownian motions.
+
+\bigskip
+
 The model is also similar to that presented in \cite{Warin} except that the $\sigma_i$
 volatility in this model is a function of forward maturity date $T$, rather than
 ovservation date $t$ in \cite{Warin}.
 
-\bigskip
+\subsection{Analysis of Model}
 The following observations can be made about this model:
 
 \begin{itemize}
@@ -70,10 +78,11 @@ The following observations can be made about this model:
         is liquid enough to be able to extract a volatility surface (i.e. implied volatility
         by expiry and maturity) in order to calibrate a model to take the surface into account
         (e.g. a stochastic volatility model) and price a relativeley simple product like an 
-        Asian option. Maybe the model is suitable as part of a more complex model for 
+        Asian option. Potentially this model is suitable for the price dynamics part of a 
+        more complex model for 
         optimising a physical oil asset such as an oil refinery, where the 
         practical implementation of the optimisation algorithm is only possible with a relatively
-        simple deterministic volatilities model such as this one. A similar reasoning
+        simple deterministic volatility model such as the one presented here. A similar reasoning
         could be used to jusfify the suitability for use for pricing gas storage, swing, and
         power generation assets, as these require complex optimisation. But the reason would
         be even more compelling for such assets as, in many Europe markets, vanilla options
@@ -82,11 +91,12 @@ The following observations can be made about this model:
         \item The price of some commodities can occasionally go negative, for example
         power and natural gas. Whether this model is suitable depends on the frequency
         of such negative price occurances, and whether the use of the model is impacted
-        by this.
+        by this. For example it definetely shouldn't be used to price half-hourly exercise
+        European options on the spot power with strike price $\leq 0$.
     \end{itemize}
-    \item The model is fitted to the forward curve in that the expected spot price 
+    \item The model is fitted to the forward curve, i.e. the expected spot price 
     is equal to the equivalent point on the initial curve. This makes the model suitable
-    for use assuming the risk-neutral probability measure with deterministic interest
+    for use under the risk-neutral probability measure assuming deterministic interest
     rates.
     \item There are $n$ sources of uncertainty for which the effect on $F(t, T)$
     depends on the following parameters:
@@ -94,9 +104,10 @@ The following observations can be made about this model:
         \item The impact of each factor's movement on forward prices decays exponentially
         with time to maturity (i.e. $T-t$) with the $\alpha_i$ parameter determining the
         rate of this decay. A higher $\alpha_i$ results in a more rapid decay, and the minimum
-        possible value of zero for $\alpha_i$ means that the $i^\text{th}$ factor result in 
-        non-decaying parrallel shifts in the whole forward curve, before the $\sigma_i(T)$ 
-        parameter is taken into account. As the derivation of the spot price process shows
+        possible value of zero for $\alpha_i$ means that movements in the $i^\text{th}$ 
+        stochastic factor result in 
+        non-decaying parrallel shifts in the whole forward curve, assuming $\sigma_i(T)$ 
+        returns a constant value. As the derivation of the spot price process shows
         below, in terms of spot price dynamics $\alpha_i$ translates to the mean reversion 
         rate of the $i^\text{th}$ stochastic factor driving the spot price.
         \item $\sigma_i$ is an arbitray maturity dependent volatility function. This parameter
@@ -110,8 +121,8 @@ The following observations can be made about this model:
     \end{itemize}
 \end{itemize}
 
-\bigskip
-
+\section{Analytical Result on Distribution of Prices}
+\subsection{Forward Price Distrubtion}
 Integrating this SDE (see Appendix I):
 
 \begin{equation}
@@ -119,8 +130,7 @@ Integrating this SDE (see Appendix I):
     F(t_2, T) = F(t_1, t)e^{- \frac{1}{2} V(t_1, t_2, T) + I(t_1, t_2, T)}
 \end{equation}
 
-\bigskip
-
+\subsubsection{Forward Covariance Surface}
 A closed form expression exists for the integrated covariances of
 forward price log returns. This is derived in Appendix II. The evaluation of such 
 covariances is essential to
@@ -274,7 +284,7 @@ contracts delivering on respective periods starting on $T_1$ and $T_2$.
     \ln\biggl(\frac{F(t_2, T_2)}{F(t_1, T_2)} \biggr) \biggr] \\
 \end{equation}
 
-Remove the products of stochastic and deterministic terms, as they will equal zero:
+Removing the products of stochastic and deterministic terms, as they will be equal to zero:
 
 \begin{equation}
     C(t_1, t_2, T_1, T_2) = \mathbb{E}\bigl[ I(t_1, t_2, T_1) I(t_1, t_2, T_2) \bigr] 
