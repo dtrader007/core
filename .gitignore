@@ -360,3 +360,4 @@ junit/
 *.synctex.gz
 *.fdb_latexmk
 *.out
+*.toc
