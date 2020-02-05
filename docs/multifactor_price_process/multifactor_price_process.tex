@@ -30,26 +30,32 @@ simulation.
 
 \begin{align}
     \label{eq:forward_sde}
-    \frac{dF(t, T)}{F(t, T)}=\sum_{i=1}^n \sigma_i(T)e^{-\alpha_i(T-t)}dz_i(t) \\
+    \frac{dF(t, T)^l}{F(t, T)^l}=\sum_{i=1}^{n^l} \sigma_i(T)^le^{-\alpha_i^l(T-t)}dz_i^l(t) \\
     \nonumber
-    \alpha_i \in \mathbb{R}_{\ge 0} \\
+    \alpha_i^l \in \mathbb{R}_{\ge 0} \\
     \nonumber
     t \in \mathbb{R}_{\ge 0} \\
     \nonumber
-    T \in \{ T_0, T_1, T_2, \hdots | T_j \ge t  \} \\
+    T \in \{ T_0^l, T_1^l, T_2^l, \hdots | T_j^l \ge t  \} \\
     \nonumber
-    \sigma_i : \mathbb{R}_{\ge 0} \rightarrow \mathbb{R}
+    \sigma_i^l : \mathbb{R}_{\ge 0} \rightarrow \mathbb{R} \\
+    \nonumber
+    l \in [1, m]
 \end{align}
 
 
-Where $z_i(t)$ follow correlated Wiener processes with correlation $\rho_{i, j}$, i.e.
+Where $z_i^l(t)$ follow correlated Wiener processes with correlation $\rho_{i, j}^{x, y}$, i.e.
 
 \begin{equation}
-    \mathbb{E}[dz_i(t)dz_j(t)] = \rho_{i, j}dt
+    \mathbb{E}[dz_i^x(t)dz_j^y(t)] = \rho_{i, j}^{x, y}dt
 \end{equation}
 
-$F(t, T)$ is the forward price observed at time $t$, for delivery over the period
-starting at time $T$.
+$F(t, T)^l$ is the forward price observed at time $t$, for delivery over the period
+starting at time $T$ of the $l^{\text{th}}$ of $m$ commodity underlyings.
+Note for the majority of equations in the rest of this text, in order to lighten
+notation, the $l$ superscript is dropped and results are given for the single-commodity
+case. Where relevant the $l$ superscript will be introduced to illustrate the model
+behaviour in a multi-commodity context.
 
 \subsection{Comparison With Other Models}
 
@@ -283,7 +289,10 @@ Hence the forward price can be expressed as:
 \label{appendix:fwd_covar}
 This section derives a closed form expression for the integrated covariances of
 forward price log returns, a quantity is referred to as "terminal covariance" in
-\cite{Rebonato}. Defining $C(t_1, t_2, T_1, T_2)$
+\cite{Rebonato}.
+
+\subsection{Single Commodity}
+Defining $C(t_1, t_2, T_1, T_2)$
 as the integrated covariance from $t_1$ to $t_2$, between the log returns of forward 
 contracts delivering on respective periods starting on $T_1$ and $T_2$.
 
@@ -320,9 +329,23 @@ $C$:
     e^{-\alpha_i T_1 -\alpha_j T_2} \vartheta_{-t_1, -t_2}(\alpha_i + \alpha_j)
 \end{equation}
 
+\subsection{Multiple Commodities}
+Defining $C(t_1, t_2, T_1, T_2, x, y)$
+as the integrated covariance from $t_1$ to $t_2$, between the log returns of forward 
+contracts delivering on respective periods starting on $T_1$ for commodity $x$,
+and $T_2$ for commodity $y$, the results in the previous subsection can be updated
+to show:
+
+\begin{equation}
+    C(t_1, t_2, T_1, T_2, x, y) = \sum_{i=1}^{n^x} \sigma_i^x(T) \sum_{j=1}^{n^y} 
+    \sigma_j^y(T) \rho_{i,j}^{x, y} 
+    e^{-\alpha_i^x T_1 -\alpha_j^y T_2} \vartheta_{-t_1, -t_2}(\alpha_i^x + \alpha_j^y)
+\end{equation}
+
 
 \section{Spot Price Process Distribution and Simulation}
 \label{appendix:spot_distribution}
+\subsection{Single Commodity}
 Defining the spot price $S(t)$ as the price for delivery of the commodity in the period
 starting at time $t$, observed at time $t$. Using the equivalence between $S(t)$
 and $F(t, t)$ and equation \ref{eq:forward_process_integrated}:
@@ -405,7 +428,7 @@ Where, using the property of Ito Integrals $Z_i(t_k)$ is multivariate normally
 distributed, with mean zero and covariance:
 
 \begin{equation}
-    cov(Z_i, Z_j) = \frac{\rho_{i, j}}{\alpha_i + \alpha_j}(1 - 
+    cov(Z_i(t_k), Z_j(t_k)) = \frac{\rho_{i, j}}{\alpha_i + \alpha_j}(1 - 
     e^{-(\alpha_i + \alpha_j)(t_k - t_{k-1})})
 \end{equation}
 
@@ -416,9 +439,30 @@ The spot price can then be calculated from the values of $F_i(t_k)$:
     V_s(t_{k-1})) + \sum_{i=1}^n \bigl(\sigma_i(t_k)F_i(t_k) - \sigma_i(t_{k-1})F_i(t_{k-1})\bigr)}
 \end{equation}
 
+\subsection{Multiple Commodities}
+For multiple commodities, simulation of $m$ commodity underlying spot prices is 
+performed for $l \in [1, m]$ using the following:
+
+\begin{equation}
+    S^l(t_k) = S^l(t_{k-1}) \frac{F^l(0, t_k)}{F^l(0, t_{k-1})} e^{- \frac{1}{2} (V_s^l(t_k) - 
+    V_s^l(t_{k-1})) + \sum_{i=1}^{n^l} \bigl(\sigma_i^l(t_k)f_i^l(t_k) - \sigma_i^l(t_{k-1})f_i^l(t_{k-1})\bigr)}
+\end{equation}
+
+Where $V_s^l$ is defined as being the same as $V_s$, except with $n$ and all $\alpha$ and 
+$\sigma$ items being superscripted with $l$. $f_i^l$ is defined recursively as:
+
+\begin{equation}
+    f_i^l(t_k) = e^{-\alpha_i^l(t_k - t_{k-1})}f_i^l(t_{k-1}) + Z_i^l(t_k)
+\end{equation}
+
+$Z_i^l(t_k)$ is multivariate normally distributed, with mean zero and covariance:
+
+\begin{equation}
+    cov(Z_i^x(t_k), Z_j^y(t_k)) = \frac{\rho_{i, j}^{x, y}}{\alpha_i^x + \alpha_j^y}(1 - 
+    e^{-(\alpha_i^x + \alpha_j^y)(t_k - t_{k-1})})
+\end{equation}
 
 % TODO significance of F as factor for Markovian
-% TODO make multi-commodity
 
 \bibliographystyle{plainnat}
 \bibliography{multifactor_price_process}
