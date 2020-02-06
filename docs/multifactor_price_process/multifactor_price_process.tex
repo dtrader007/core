@@ -432,6 +432,16 @@ distributed, with mean zero and covariance:
     e^{-(\alpha_i + \alpha_j)(t_k - t_{k-1})})
 \end{equation}
 
+Similar to before, we have a situation where the covariance is not defined for the case
+where both $\alpha_i$ and $\alpha_j$ are equal to zero. This case can be allowed, as
+before, by redefining $cov(Z_i(t_k), Z_j(t_k))$ to it's continuous extension:
+
+\begin{equation}
+    cov(Z_i(t_k), Z_j(t_k)) = \rho_{i, j} \vartheta_{t_k-t_{k-1}, 0}(\alpha_i + \alpha_j)
+\end{equation}
+
+\bigskip
+
 The spot price can then be calculated from the values of $f_i(t_k)$:
 
 \begin{equation}
@@ -458,8 +468,7 @@ $\sigma$ items being superscripted with $l$. $f_i^l$ is defined recursively as:
 $Z_i^l(t_k)$ is multivariate normally distributed, with mean zero and covariance:
 
 \begin{equation}
-    cov(Z_i^x(t_k), Z_j^y(t_k)) = \frac{\rho_{i, j}^{x, y}}{\alpha_i^x + \alpha_j^y}(1 - 
-    e^{-(\alpha_i^x + \alpha_j^y)(t_k - t_{k-1})})
+    cov(Z_i^x(t_k), Z_j^y(t_k)) = \rho_{i, j}^{x, y} \vartheta_{t_k-t_{k-1}, 0}(\alpha_i^x + \alpha_j^y)
 \end{equation}
 
 % TODO significance of F as factor for Markovian
