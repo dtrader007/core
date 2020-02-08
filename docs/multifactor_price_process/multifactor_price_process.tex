@@ -157,6 +157,7 @@ contracts delivering on respective periods starting on $T_1$ and $T_2$.
     e^{-\alpha_i T_1 -\alpha_j T_2} \vartheta_{-t_1, -t_2}(\alpha_i + \alpha_j)
 \end{equation}
 
+\newpage
 \appendix
 \appendixpage
 \section{Integration of Forward Price SDE}
@@ -284,6 +285,62 @@ Hence the forward price can be expressed as:
 \begin{equation}
     F(t_2, T) = F(t_1, t)e^{- \frac{1}{2} V(t_1, t_2, T) + I(t_1, t_2, T)}
 \end{equation}
+
+\bigskip
+\subsection{Simulation of Forward Curve}
+\subsubsection{Single Commodity}
+To illustrate how the whole forward curve can be simulated, first we shall
+introduce $Y(t_1, t_2)$:
+
+\begin{equation}
+    Y_i(t_1, t_2) = \int_{t_1}^{t_2} e^{\alpha_iu} dz_i(u)
+\end{equation}
+
+This Ito integral can be recognised as one of the stochastic factors from the definition
+of $I(t_1, t_2, T)$, with the forward maturity $T$ factored out. The foward price
+can then be expressed as:
+
+\begin{equation}
+    F(t_2, T) = F(t_1, T)e^{- \frac{1}{2} V(t_1, t_2, T) + 
+        \sum_{i=1}^n \sigma_i(T) e^{-\alpha_i T} Y_i(t_1, t_2) }
+\end{equation}
+
+Where $Y_i(t_1, t_2)$ are normally distributed, with mean zero and covariance:
+
+\begin{equation}
+    cov(Y_i(t_1, t_2), Y_j(t_1, t_2)) = \rho_{i, j}  \frac{1}{\alpha_i + \alpha_j}
+        (e^{(\alpha_i + \alpha_j)t_2} - e^{(\alpha_i + \alpha_j)t_1})
+\end{equation}
+
+Redefining this with a continuous extension to allow $\alpha_i + \alpha_j$ to equal
+zero:
+
+\begin{equation}
+    cov(Y_i(t_1, t_2), Y_j(t_1, t_2)) = \rho_{i, j} \vartheta_{-t_1, -t_2}(\alpha_i + \alpha_j)
+\end{equation}
+
+Using the above form it can be seen that the stochastic evolution of the whole forward curve
+from $t_1$ to $t_2$ can be achieved as a function of $n$ generated random numbers.
+
+\subsubsection{Multiple Commodities}
+The simulation of the whole forward curve for multiple commodities can be illustrated
+by a simple extension to the single commodity case:
+
+\begin{equation}
+    F^l(t_2, T) = F^l(t_1, T)e^{- \frac{1}{2} V^l(t_1, t_2, T) + 
+        \sum_{i=1}^n \sigma_i^l(T) e^{-\alpha_i^l T} Y_i^l(t_1, t_2) }
+\end{equation}
+
+Where $V^l(t_1, t_2, T)$ is defined as being identical to $V(t_1, t_2, T)$, except with
+$n$ and $\alpha$ variables being superscripted with $l$, and $\rho$ is superscripted
+with $l, l$. 
+$Y_i^l(t_1, t_2)$ are normally distributed, with mean zero and covariance:
+
+\begin{equation}
+    cov(Y_i^x(t_1, t_2), Y_j^y(t_1, t_2)) = \rho_{i, j}^{x, y} 
+    \vartheta_{-t_1, -t_2}(\alpha_i^x + \alpha_j^y)
+\end{equation}
+
 
 \section{Integrated Forward Covariances}
 \label{appendix:fwd_covar}
