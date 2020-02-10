@@ -20,17 +20,21 @@ WARNING: THIS DOCUMENT IS CURRENTLY WORK IN PROGRESS
 
 \tableofcontents
 
+\newpage
+
 \section{Introduction}
 This document describes a very general multi-factor commodity price process model,
 together with some analytical results which can be used to explore the assumed
 price dynamics, and simulate prices computationally when performing a Monte-Carlo
 simulation.
 
-\subsection{Model SDE}
+\subsection{Forward Price SDE}
+The starting point is the SDE (stochastic differential equation) for the forward
+price process:
 
 \begin{align}
     \label{eq:forward_sde}
-    \frac{dF(t, T)^l}{F(t, T)^l}=\sum_{i=1}^{n^l} \sigma_i(T)^le^{-\alpha_i^l(T-t)}dz_i^l(t) \\
+    \frac{dF(t, T)^l}{F(t, T)^l}=\sum_{i=1}^{n^l} \sigma_i^l(T)e^{-\alpha_i^l(T-t)}dz_i^l(t) \\
     \nonumber
     \alpha_i^l \in \mathbb{R}_{\ge 0} \\
     \nonumber
@@ -50,8 +54,8 @@ Where $z_i^l(t)$ follow correlated Wiener processes with correlation $\rho_{i, j
     \mathbb{E}[dz_i^x(t)dz_j^y(t)] = \rho_{i, j}^{x, y}dt
 \end{equation}
 
-$F(t, T)^l$ is the forward price observed at time $t$, for delivery over the period
-starting at time $T$ of the $l^{\text{th}}$ of $m$ commodity underlyings.
+$F(t, T_j)^l$ is the forward price observed at time $t$, for delivery over the time 
+interval $[T_j, T_{j+1})$ of the $l^{\text{th}}$ of $m$ commodity underlyings.
 Note for the majority of equations in the rest of this text, in order to lighten
 notation, the $l$ superscript is dropped and results are given for the single-commodity
 case. Where relevant the $l$ superscript will be introduced to illustrate the model
@@ -60,12 +64,13 @@ behaviour in a multi-commodity context.
 \subsection{Comparison With Other Models}
 
 This model is almost a specific case of the general multi-factor model presented
-in \cite{Clewlow}, which instead of a coefficient of the Brownian motion of
-$\sigma_i(T)e^{-\alpha_i(T-t)}$ presented here, uses the more general form
+in \cite{Clewlow}, which instead of a coefficients of the Wiener process being
+$\sigma_i(T)e^{-\alpha_i(T-t)}$ as presented here, uses the more general form
 $\sigma_i(t, T)$. As results presented below show, the advantage of the form
 used in this paper is that the future distribution of forward and spot prices
-can be derived analyticallly. Another difference is that the cited paper assumes the driving stochastic factors
-are uncorrelated Brownian motions, whereas the model presented here uses correlated
+can be derived analyticallly. Another difference is that the cited paper assumes 
+the driving stochastic factors
+are uncorrelated Wienver processes, whereas the model presented here uses correlated
 Brownian motions.
 
 \bigskip
@@ -82,22 +87,24 @@ The following observations can be made about this model:
     considerations: 
     \begin{itemize}
         \item The model doesn't take into account volatility smile. This assumption is
-        fine for the situation of there not being a liquid market in vanilla 
-        options and/or the model is being used for a complex product which isn't sensitive
+        acceptable for modelling commodities which do not have a liquid market in vanilla 
+        options. It is also an acceptable to model the price dynamics as part of a pricing
+        and/or optimisation model for a complex physical product which isn't sensitive
         to changes in the shape of the skew surface. For example this model probably isn't
         suitable for pricing Asian options on Brent crude oil as the vanilla options market
         is liquid enough to be able to extract a volatility surface (i.e. implied volatility
-        by expiry and maturity) in order to calibrate a model to take the surface into account
-        (e.g. a stochastic volatility model) and price a relativeley simple product like an 
-        Asian option. Potentially this model is suitable for the price dynamics part of a 
+        by expiry and maturity) in order to calibrate a price dynamics model which take the surface into account
+        (e.g. a stochastic volatility model) for use in pricing a relativeley simple product like 
+        Asian options. Potentially this model is suitable for the price dynamics part of a 
         more complex model for 
         optimising a physical oil asset such as an oil refinery, where the 
         practical implementation of the optimisation algorithm is only possible with a relatively
-        simple deterministic volatility model such as the one presented here. A similar reasoning
+        simple deterministic volatility model, such as the one presented here. A similar reasoning
         could be used to jusfify the suitability for use for pricing gas storage, swing, and
         power generation assets, as these require complex optimisation. But the reason would
-        be even more compelling for such assets as, in many Europe markets, vanilla options
-        markets either do not exist, or are not liquid enough to reliably calibrate a
+        be even more justified for use with these products in in many European markets, 
+        where the vanilla options
+        markets either does not exist, or are not liquid enough to reliably calibrate a
         stochastic volatility model.
         \item The price of some commodities can occasionally go negative, for example
         power and natural gas. Whether this model is suitable depends on the frequency
@@ -107,7 +114,7 @@ The following observations can be made about this model:
     \end{itemize}
     \item The model is fitted to the forward curve, i.e. the expected spot price 
     is equal to the equivalent point on the initial curve. This makes the model suitable
-    for use under the risk-neutral probability measure assuming deterministic interest
+    for use under the risk-neutral probability measure, assuming deterministic interest
     rates.
     \item There are $n$ sources of uncertainty for which the effect on $F(t, T)$
     depends on the following parameters:
@@ -141,7 +148,47 @@ Integrating this SDE (see Appendix \ref{appendix:forward_sde_integrate}):
     F(t_2, T) = F(t_1, t)e^{- \frac{1}{2} V(t_1, t_2, T) + I(t_1, t_2, T)}
 \end{equation}
 
-\subsubsection{Forward Covariance Surface}
+Where:
+
+\begin{equation}
+    \nonumber
+    V(t_1, t_2, T) = \sum_{i=1}^n \sigma_i(T) \sum_{j=1}^n \sigma_j(T) \rho_{i,j} 
+    \vartheta_{T-t_1, T-t_2}(\alpha_i + \alpha_j)
+\end{equation}
+
+\begin{align}
+    \vartheta_{c_1, c_2}(x) = 
+    \begin{cases}
+        \frac{e^{-x c_2} - e^{-x c_1}}{x} & \text{for} \quad x \in \mathbb{R}_{\ne 0} \\
+        c_1 - c_2 & \text{for} \quad x=0
+    \end{cases}
+\end{align}
+
+\begin{equation}
+    I(t_1, t_2, T) = \sum_{i=1}^n \sigma_i(T) \int_{t_1}^{t_2} e^{-\alpha_i(T-u)}dz_i(u)
+\end{equation}
+
+\subsection{Simulation of Forward Curve}
+A more convenient form of \ref{eq:forward_process_integrated} for use in simulating
+the evaluation of the whole forward curve between $t_1$ and $t_2$ is:
+
+\begin{equation}
+    F(t_2, T) = F(t_1, T)e^{- \frac{1}{2} V(t_1, t_2, T) + 
+        \sum_{i=1}^n \sigma_i(T) e^{-\alpha_i T} Y_i(t_1, t_2) }
+\end{equation}
+
+Where $Y_i(t_1, t_2)$ are normally distributed, with mean zero and covariance:
+
+\begin{equation}
+    cov(Y_i(t_1, t_2), Y_j(t_1, t_2)) = \rho_{i, j} \vartheta_{-t_1, -t_2}(\alpha_i + \alpha_j)
+\end{equation}
+
+\bigskip
+
+See Appendix \ref{appendix:fwd_sim} for the derivation of this, together with
+the equivalent result for the joint simulation of multiple commodities forward curves.
+
+\subsection{Forward Covariance Surface}
 A closed form expression exists for the integrated covariances of
 forward price log returns. This is derived in Appendix \ref{appendix:fwd_covar}. The evaluation of such 
 covariances is essential to
@@ -287,8 +334,9 @@ Hence the forward price can be expressed as:
 \end{equation}
 
 \bigskip
-\subsection{Simulation of Forward Curve}
-\subsubsection{Single Commodity}
+\section{Simulation of Forward Curve}
+\label{appendix:fwd_sim}
+\subsection{Single Commodity}
 To illustrate how the whole forward curve can be simulated, first we shall
 introduce $Y(t_1, t_2)$:
 
@@ -322,7 +370,7 @@ zero:
 Using the above form it can be seen that the stochastic evolution of the whole forward curve
 from $t_1$ to $t_2$ can be achieved as a function of $n$ generated random numbers.
 
-\subsubsection{Multiple Commodities}
+\subsection{Multiple Commodities}
 The simulation of the whole forward curve for multiple commodities can be illustrated
 by a simple extension to the single commodity case:
 
