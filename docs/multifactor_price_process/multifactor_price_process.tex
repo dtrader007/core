@@ -204,6 +204,68 @@ contracts delivering on respective periods starting on $T_1$ and $T_2$.
     e^{-\alpha_i T_1 -\alpha_j T_2} \vartheta_{-t_1, -t_2}(\alpha_i + \alpha_j)
 \end{equation}
 
+See Appendix \ref{appendix:fwd_covar} for the derivation of this, together with
+the equivalent result for the joint simulation of multiple commodities forward curves.
+
+\subsection{Spot Price Distribution}
+The spot price $S(t)$ is defined as the price for delivery of the commodity in the period
+starting at time $t$, observed at time $t$. Appendix \ref{appendix:spot_distribution}
+derives an analytical form for the spot price conditional on the  filtration 
+$\mathcal{F}_{t_{k-1}}$:
+
+\begin{equation}
+    S(t_k) = S(t_{k-1}) \frac{F(0, t_k)}{F(0, t_{k-1})} e^{- \frac{1}{2} (V_s(t_k) - 
+    V_s(t_{k-1})) + \sum_{i=1}^n \bigl(\sigma_i(t_k)f_i(t_k) - \sigma_i(t_{k-1})f_i(t_{k-1})\bigr)}
+\end{equation}
+
+Where $f(t)$ is defined recursively as:
+
+\begin{equation}
+    f_i(t_k) = e^{-\alpha_i(t_k - t_{k-1})}f_i(t_{k-1}) + Z_i(t_k)
+\end{equation}
+
+With base case:
+
+\begin{equation}
+    f_i(0) = 0
+\end{equation}
+
+$Z_i(t_k)$ is multivariate normally distributed, with mean zero and covariance:
+
+\begin{equation}
+    cov(Z_i(t_k), Z_j(t_k)) = \rho_{i, j} \vartheta_{t_k-t_{k-1}, 0}(\alpha_i + \alpha_j)
+\end{equation}
+
+Appendix \ref{appendix:spot_distribution} gives the equivalent result for the case
+of multiple commodities.
+
+\bigskip
+
+$f_i(t)$ can be recognised as an Ornstein–Uhlenbeck process with zero drift,
+mean reversion parameter $\alpha_i$, and $\sigma$ (coeffient of Brownian motion) of 1.
+
+Except in the case of $n$ being equal to one, it can be seen % TODO add equation reference
+that the spot price is not Markovian itself, but is Markovian with respect to the
+$n$ state variables $f_i$.
+
+% TODO describe significant for LSMC pricing method
+
+This has practical significance for two reasons. Firstly, when simulating only the 
+spot price, it is necessary to simulate the $n$ underlying $f_i$ stochastic factors,
+before calculating the spot price from these. If simulating the price for several
+futures times, it will be necessary to keep track of all $f_i$ due to their
+recursive nature.
+
+
+Simulating just the spot price, rather than the whole forward curve, is of interest
+for physical energy commodity products, such as gas storage, swing contracts
+and power generation, as the ultimate cash flows (which are conditional upon the
+owners decisions) will derive from the spot price. Hence, when building certain pricing 
+and optimisation models, the simulation of just the spot price will suffice.
+Of course, the whole forward curve could be simulated, with the spot price being taken
+as the first point on the curve. However, simulating just the spot price will be 
+more computationally efficient, if this is all we are interested in.
+
 \newpage
 \appendix
 \appendixpage
