@@ -612,6 +612,7 @@ before, by redefining $cov(Z_i(t_k), Z_j(t_k))$ to it's continuous extension:
 The spot price can then be calculated from the values of $f_i(t_k)$:
 
 \begin{equation}
+    \label{eq:appendix_spot_sim}
     S(t_k) = S(t_{k-1}) \frac{F(0, t_k)}{F(0, t_{k-1})} e^{- \frac{1}{2} (V_s(t_k) - 
     V_s(t_{k-1})) + \sum_{i=1}^n \bigl(\sigma_i(t_k)f_i(t_k) - \sigma_i(t_{k-1})f_i(t_{k-1})\bigr)}
 \end{equation}
@@ -635,8 +636,58 @@ $\sigma$ items being superscripted with $l$. $f_i^l$ is defined recursively as:
 $Z_i^l(t_k)$ is multivariate normally distributed, with mean zero and covariance:
 
 \begin{equation}
+    \label{eq:appendix_z_covar}
     cov(Z_i^x(t_k), Z_j^y(t_k)) = \rho_{i, j}^{x, y} \vartheta_{t_k-t_{k-1}, 0}(\alpha_i^x + \alpha_j^y)
 \end{equation}
+
+\subsection{Markov Property of Spot Price}
+
+Using the definition of $f_i$, \ref{eq:appendix_spot_sim} can be rewritten as:
+
+% TODO sort out this equation being too big
+\begin{equation}
+    S(t_k) = S(t_{k-1}) \frac{F(0, t_k)}{F(0, t_{k-1})} e^{- \frac{1}{2} (V_s(t_k) - 
+    V_s(t_{k-1})) + \sum_{i=1}^n \bigl(\sigma_i(t_{k-1}Z_i(t_k)) + f_i(t_{k-1})
+    (\sigma_i(t_k) e^{-\alpha_i (t_k - t_{k-1})} - \sigma_i(t_{k-1}) ) \bigr)}
+\end{equation}
+
+All terms in the right hand side of the above equation are deterministic, apart from 
+$Z_i$, $S(t_{k-1})$ and $f_i(t_{k-1})$, and given knowledge of the filtration 
+$\mathcal{F}_{t_{k-1}}$ only $Z_i$ is random.
+
+\bigskip
+Defining the vectors $\+z$ and $\+f_{t_k}$, both containing $n$ elements, with the $i^{th}$ element 
+being equal to $Z_i(t_k)$ and $f_i(t_k)$ respectively.
+
+\begin{equation}
+    S(t_k) = \omega(\+z, \+f_{t_{k-1}})
+\end{equation}
+
+Note that $S(t_{k-1})$ has been omitted from the above, as it itself a deterministic
+function of the $f_i$ terms.
+Given knowledge of the filtration $\mathcal{F}_{t_{k-1}}$ the expectation of an arbitray
+function $g$ can be written as:
+
+\begin{equation}
+    \mathbb{E}[g(S(t_k)) | \mathcal{F}_{t_{k-1}}] = 
+        \int_\mathbb{R} \hdots \int_\mathbb{R} \omega(\+u, \+f_{t_{k-1}})
+        h(\+u) du_1 \hdots du_n
+\end{equation}
+% TODO define u
+Where $h$ is the probability density function of the multivariate normal distribution
+with covariance given by \ref{eq:appendix_z_covar}.
+
+\bigskip
+
+\begin{equation}
+    \mathbb{E}[g(S(t_k)) | \mathcal{F}_{t_{k-1}}] = \mathbb{E}[g(S(t_k)) | \+f_{t_{k-1}}]
+\end{equation}
+
+The intuitive meaning of this is that, at any point in time $t$, given knowledge of the 
+vector of mean reverting factors $\+f_t$, we know the exact distribution of the 
+spot price for any time greater than $t$.
+
+
 
 % TODO significance of F as factor for Markovian
 
