@@ -29,15 +29,42 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Cmdty.TimePeriodValueTypes;
+using Cmdty.TimeSeries;
+using JetBrains.Annotations;
+using MathNet.Numerics.LinearAlgebra;
 
 namespace Cmdty.Core.Simulation.MultiFactor
 {
     public sealed class MultiFactorSpotPriceSimulator<T>
         where T : ITimePeriod<T>
     {
-        public MultiFactorSpotPriceSimulator()
+        private readonly int numSteps; // TODO get rid of
+        private readonly int numFactors; // TODO get rid of
+        private readonly double[] _forwardPriceRatios;
+        private readonly double[] _spotDriftAdjustments;
+        private readonly double[,] _reversionMultipliers;
+        private readonly double[,] _spotVols;
+        private readonly Matrix<double> _factorCovariances;
+
+        public MultiFactorSpotPriceSimulator([NotNull] MultiFactorParameters<T> modelParameters, DateTime currentDateTime,
+            [NotNull] TimeSeries<T, double> forwardCurve, [NotNull] IEnumerable<T> simulatedPeriods) // TODO pass in random number generator factory
         {
-            
+            if (modelParameters == null) throw new ArgumentNullException(nameof(modelParameters));
+            if (forwardCurve == null) throw new ArgumentNullException(nameof(forwardCurve));
+            if (simulatedPeriods == null) throw new ArgumentNullException(nameof(simulatedPeriods));
+
+
+
+        }
+
+        public MultiFactorSpotSimResults Simulate(int numSims)
+        {
+            var spotPrices = new double[numSteps, numSims];
+            double[,,] markovFactors = new double[numSteps, numSims, numFactors];
+
+            throw new NotImplementedException();
+
+            return new MultiFactorSpotSimResults(spotPrices, markovFactors);
         }
 
     }
