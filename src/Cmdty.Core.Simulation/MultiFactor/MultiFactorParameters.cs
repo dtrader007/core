@@ -34,7 +34,7 @@ namespace Cmdty.Core.Simulation.MultiFactor
         where T : ITimePeriod<T>
     {
         public double[,] FactorCorrelations { get; } // TODO make immutable
-        public IReadOnlyCollection<Factor<T>> Factors { get; }
+        public IReadOnlyList<Factor<T>> Factors { get; }
 
         public MultiFactorParameters(IEnumerable<Factor<T>> factors, double[,] factorCorrelations)
         {
@@ -49,6 +49,8 @@ namespace Cmdty.Core.Simulation.MultiFactor
 
             // TODO full check of correlation, e.g. diagonals 1, within [-1, 1]. Positive semi-definite?
         }
+
+        public int NumFactors => FactorCorrelations.Length;
 
     }
 }
