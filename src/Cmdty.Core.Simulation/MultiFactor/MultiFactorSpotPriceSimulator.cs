@@ -40,14 +40,15 @@ namespace Cmdty.Core.Simulation.MultiFactor
     {
         private readonly int numSteps; // TODO get rid of
         private readonly int numFactors; // TODO get rid of
-        private readonly double[] _forwardPriceRatios;
+        private readonly double[] _forwardPrices;
         private readonly double[] _spotDriftAdjustments;
         private readonly double[,] _reversionMultipliers;
         private readonly double[,] _spotVols;
         private readonly Matrix<double>[] _factorCovarianceSquareRoots;
 
         public MultiFactorSpotPriceSimulator([NotNull] MultiFactorParameters<T> modelParameters, DateTime currentDateTime,
-            [NotNull] TimeSeries<T, double> forwardCurve, [NotNull] IEnumerable<T> simulatedPeriods) // TODO pass in random number generator factory
+            [NotNull] TimeSeries<T, double> forwardCurve, [NotNull] IEnumerable<T> simulatedPeriods, 
+            Func<DateTime, DateTime, double> timeFunc) // TODO pass in random number generator factory
         {
             if (modelParameters == null) throw new ArgumentNullException(nameof(modelParameters));
             if (forwardCurve == null) throw new ArgumentNullException(nameof(forwardCurve));
@@ -61,33 +62,44 @@ namespace Cmdty.Core.Simulation.MultiFactor
             if (numPeriods == 0)
                 throw new ArgumentException(nameof(simulatedPeriods) + " argument cannot be empty.", nameof(simulatedPeriods));
             
-            _forwardPriceRatios = new double[numPeriods];
+            _forwardPrices = new double[numPeriods];
             _spotDriftAdjustments = new double[numPeriods];
             _reversionMultipliers = new double[numPeriods, numFactors];
             _spotVols = new double[numPeriods, numFactors];
             _factorCovarianceSquareRoots = new Matrix<double>[numPeriods];
 
+            double timeToMaturityPrevious = 0;
             for (int i = 0; i < simulatedPeriodsArray.Length; i++)
             {
-                T simulatedPeriod = simulatedPeriodsArray[i];
-                if (simulatedPeriod.Start <= currentDateTime) // TODO make comparison using day count function?
+                T period = simulatedPeriodsArray[i];
+                if (period.Start <= currentDateTime) // TODO make comparison using day count function?
                     throw new ArgumentException($"All elements of {simulatedPeriods} must start after {currentDateTime}.", nameof(simulatedPeriods));
+                
                 if (i > 0)
                 {
                     T lastPeriod = simulatedPeriodsArray[i - 1];
-                    if (simulatedPeriod.CompareTo(lastPeriod) < 0)
+                    if (period.CompareTo(lastPeriod) < 0)
                         throw new ArgumentException(nameof(simulatedPeriods) + " argument must be sorted in ascending order.", nameof(simulatedPeriods));
-                    if (simulatedPeriod.Equals(lastPeriod))
-                        throw new ArgumentException(nameof(simulatedPeriods) + $" argument cannot contain duplicated elements. More than one element with value {simulatedPeriod} found.", nameof(simulatedPeriods));
+                    if (period.Equals(lastPeriod))
+                        throw new ArgumentException(nameof(simulatedPeriods) + $" argument cannot contain duplicated elements. More than one element with value {period} found.", nameof(simulatedPeriods));
                 }
+
+                if (forwardCurve.TryGetValue(period, out double forwardPrice))
+                    throw new ArgumentException($"Forward curve does not contain price for period {period}.", nameof(forwardCurve));
+
+                _forwardPrices[i] = forwardPrice;
+
+                double timeToMaturity = timeFunc(currentDateTime, period.Start);
+                double timeIncrement = timeToMaturity - timeToMaturityPrevious;
 
                 for (int j = 0; j < numFactors; j++)
                 {
                     Factor<T> factor = modelParameters.Factors[j];
-                    _spotVols[i, j] = factor.Volatility[simulatedPeriod];
-
+                    _spotVols[i, j] = factor.Volatility[period]; // TODO check if period there
+                    _reversionMultipliers[i, j] = Math.Exp(-factor.MeanReversion * timeIncrement);
                 }
 
+                timeToMaturityPrevious = timeToMaturity;
             }
 
         }
