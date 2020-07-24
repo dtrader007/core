@@ -591,8 +591,8 @@ for $i = 1, \hdots, n$.
     f_i(t_k) = e^{-\alpha_i(t_k - t_{k-1})}f_i(t_{k-1}) + Z_i(t_k)
 \end{equation}
 
-Where, using the property of Ito Integrals $Z_i(t_k)$ is multivariate normally 
-distributed, with mean zero and covariance:
+Where, using the property of Ito Integrals, a vector where the i\textsuperscript{th} item is $Z_i(t_k)$ follows a 
+multivariate normal distribution, with mean zero and covariance between elements:
 
 \begin{equation}
     cov(Z_i(t_k), Z_j(t_k)) = \frac{\rho_{i, j}}{\alpha_i + \alpha_j}(1 - 
