@@ -583,7 +583,7 @@ mean reversion parameter $\alpha_i$, and $\sigma$ (coeffient of Brownian motion)
 \bigskip
 
 When simulating the spot price for an increasing sequence of $n$
-times $t_{k-1}, t_2 \hdots t_{n-1}, t_n$ where $0 < t_{k-1} < t_k$, for each of these
+future times $t_1, t_2 \hdots t_{n-1}, t_n$ where $0 < t_{k-1} < t_k$, for each of these
 times the first step is to calculate $f_i(t_k)$ recursively, using the above relationship % TODO word better (maybe equation ref)
 for $i = 1, \hdots, n$.
 
@@ -609,12 +609,19 @@ before, by redefining $cov(Z_i(t_k), Z_j(t_k))$ to it's continuous extension:
 
 \bigskip
 
-The spot price can then be calculated from the values of $f_i(t_k)$:
+The spot price can then be calculated recursively from the values of $f_i(t_k)$ for $k>1$:
 
 \begin{equation}
     \label{eq:appendix_spot_sim}
     S(t_k) = S(t_{k-1}) \frac{F(0, t_k)}{F(0, t_{k-1})} e^{- \frac{1}{2} (V_s(t_k) - 
     V_s(t_{k-1})) + \sum_{i=1}^n \bigl(\sigma_i(t_k)f_i(t_k) - \sigma_i(t_{k-1})f_i(t_{k-1})\bigr)}
+\end{equation}
+
+With the special case where $k=1$:
+
+\begin{equation}
+    S(t_1) = F(0, t_1) e^{- \frac{1}{2} V_s(t_1) + 
+    \sum_{i=1}^n \sigma_i(t_1) f_i(t_1) }
 \end{equation}
 
 \subsection{Multiple Commodities}
