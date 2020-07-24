@@ -26,8 +26,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Cmdty.TimePeriodValueTypes;
 using Cmdty.TimeSeries;
 using JetBrains.Annotations;
@@ -95,13 +93,49 @@ namespace Cmdty.Core.Simulation.MultiFactor
                 for (int j = 0; j < numFactors; j++)
                 {
                     Factor<T> factor = modelParameters.Factors[j];
-                    _spotVols[i, j] = factor.Volatility[period]; // TODO check if period there
+                    _spotVols[i, j] = factor.Volatility[period]; // TODO check if period in volatility
                     _reversionMultipliers[i, j] = Math.Exp(-factor.MeanReversion * timeIncrement);
                 }
+
+                _factorCovarianceSquareRoots[i] = CalcFactorCovarianceSquareRoots(modelParameters, timeIncrement);
 
                 timeToMaturityPrevious = timeToMaturity;
             }
 
+        }
+
+        private static Matrix<double> CalcFactorCovarianceSquareRoots(MultiFactorParameters<T> modelParameters, double timeIncrement)
+        {
+            int numFactors = modelParameters.NumFactors;
+            // TODO does Math.NET have a more efficient representation of symmetric and triangular matrices?
+            Matrix<double> covarianceMatrix = Matrix<double>.Build.Dense(numFactors, numFactors);
+            for (int i = 0; i < numFactors; i++)
+            {
+                for (int j = i; j < numFactors; j++)
+                {
+                    double meanReversionsSum = modelParameters.Factors[i].MeanReversion +
+                                               modelParameters.Factors[j].MeanReversion;
+
+                    double covariance = modelParameters.FactorCorrelations[i, j] *
+                                        CalcFactorCorrMultiplierContExt(meanReversionsSum, timeIncrement);
+
+                    covarianceMatrix[i, j] = covariance;
+                    if (i != j)
+                        covarianceMatrix[j, i] = covariance;
+                }
+            }
+
+            return covarianceMatrix.Cholesky().Factor;
+        }
+
+        private static double CalcFactorCorrMultiplierContExt(double meanReversionsSum, double timeIncrement)
+        {
+            // TODO use some sort of tolerance?
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
+            if (meanReversionsSum == 0)
+                return timeIncrement;
+
+            return (1 - Math.Exp(-meanReversionsSum * timeIncrement)) / meanReversionsSum;
         }
 
         public MultiFactorSpotSimResults Simulate(int numSims)
