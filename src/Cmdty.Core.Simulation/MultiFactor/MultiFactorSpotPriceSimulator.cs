@@ -39,7 +39,7 @@ namespace Cmdty.Core.Simulation.MultiFactor
         private readonly int numSteps; // TODO get rid of
         private readonly int numFactors; // TODO get rid of
         private readonly double[] _forwardPrices;
-        private readonly double[] _spotDriftAdjustments;
+        private readonly double[] _driftAdjustments;
         private readonly double[,] _reversionMultipliers;
         private readonly double[,] _spotVols;
         private readonly Matrix<double>[] _factorCovarianceSquareRoots;
@@ -61,7 +61,7 @@ namespace Cmdty.Core.Simulation.MultiFactor
                 throw new ArgumentException(nameof(simulatedPeriods) + " argument cannot be empty.", nameof(simulatedPeriods));
             
             _forwardPrices = new double[numPeriods];
-            _spotDriftAdjustments = new double[numPeriods];
+            _driftAdjustments = new double[numPeriods];
             _reversionMultipliers = new double[numPeriods, numFactors];
             _spotVols = new double[numPeriods, numFactors];
             _factorCovarianceSquareRoots = new Matrix<double>[numPeriods];
@@ -99,12 +99,42 @@ namespace Cmdty.Core.Simulation.MultiFactor
 
                 _factorCovarianceSquareRoots[i] = CalcFactorCovarianceSquareRoots(modelParameters, timeIncrement);
 
+                _driftAdjustments[i] = CalcDriftAdjustment(modelParameters, timeToMaturity, period);
+
                 timeToMaturityPrevious = timeToMaturity;
             }
 
         }
 
+        private static double CalcDriftAdjustment(MultiFactorParameters<T> modelParameters, double timeToMaturity, T period)
+        {
+            double sum = 0.0;
+
+            // TODO use symmetry to speed up?
+            for (int i = 0; i < modelParameters.NumFactors; i++)
+            {
+                Factor<T> factor1 = modelParameters.Factors[i];
+                if (!factor1.Volatility.TryGetValue(period, out double vol1))
+                    throw new ArgumentException($"Factor {i} of multi-factor model parameters does not contain vol for period {period}.", 
+                        nameof(modelParameters));
+                double meanReversion1 = factor1.MeanReversion;
+                for (int j = 0; j < modelParameters.NumFactors; j++)
+                {
+                    Factor<T> factor2 = modelParameters.Factors[j];
+                    if (!factor1.Volatility.TryGetValue(period, out double vol2))
+                        throw new ArgumentException($"Factor {j} of multi-factor model parameters does not contain vol for period {period}.",
+                            nameof(modelParameters));
+                    double meanReversion2 = factor2.MeanReversion;
+
+
+                }
+            }
+
+            return -sum / 2.0;
+        }
+
         private static Matrix<double> CalcFactorCovarianceSquareRoots(MultiFactorParameters<T> modelParameters, double timeIncrement)
+            
         {
             int numFactors = modelParameters.NumFactors;
             // TODO does Math.NET have a more efficient representation of symmetric and triangular matrices?
