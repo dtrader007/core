@@ -36,21 +36,21 @@ namespace Cmdty.Core.Simulation.MultiFactor
     public sealed class MultiFactorSpotPriceSimulator<T>
         where T : ITimePeriod<T>
     {
-        private readonly int numSteps; // TODO get rid of
-        private readonly int numFactors; // TODO get rid of
+        private readonly INormalGenerator _normalGenerator;
         private readonly double[] _forwardPrices;
         private readonly double[] _driftAdjustments;
         private readonly double[,] _reversionMultipliers;
         private readonly double[,] _spotVols;
         private readonly Matrix<double>[] _factorCovarianceSquareRoots;
-
+        
         public MultiFactorSpotPriceSimulator([NotNull] MultiFactorParameters<T> modelParameters, DateTime currentDateTime,
             [NotNull] TimeSeries<T, double> forwardCurve, [NotNull] IEnumerable<T> simulatedPeriods, 
-            Func<DateTime, DateTime, double> timeFunc) // TODO pass in random number generator factory
+            Func<DateTime, DateTime, double> timeFunc, [NotNull] INormalGenerator normalGenerator) // TODO pass in random number generator factory
         {
             if (modelParameters == null) throw new ArgumentNullException(nameof(modelParameters));
             if (forwardCurve == null) throw new ArgumentNullException(nameof(forwardCurve));
             if (simulatedPeriods == null) throw new ArgumentNullException(nameof(simulatedPeriods));
+            _normalGenerator = normalGenerator ?? throw new ArgumentNullException(nameof(normalGenerator));
 
             T[] simulatedPeriodsArray = simulatedPeriods.ToArray();
 
@@ -111,6 +111,7 @@ namespace Cmdty.Core.Simulation.MultiFactor
             double sum = 0.0;
 
             // TODO use symmetry to speed up?
+            // TODO formulate as matrix multiplication as quadratic form?
             for (int i = 0; i < modelParameters.NumFactors; i++)
             {
                 Factor<T> factor1 = modelParameters.Factors[i];
@@ -126,7 +127,8 @@ namespace Cmdty.Core.Simulation.MultiFactor
                             nameof(modelParameters));
                     double meanReversion2 = factor2.MeanReversion;
 
-
+                    sum += vol1 * vol2 * modelParameters.FactorCorrelations[i, j] *
+                           CalcFactorContExt(meanReversion1 + meanReversion2, timeToMaturity);
                 }
             }
 
@@ -147,7 +149,7 @@ namespace Cmdty.Core.Simulation.MultiFactor
                                                modelParameters.Factors[j].MeanReversion;
 
                     double covariance = modelParameters.FactorCorrelations[i, j] *
-                                        CalcFactorCorrMultiplierContExt(meanReversionsSum, timeIncrement);
+                                        CalcFactorContExt(meanReversionsSum, timeIncrement);
 
                     covarianceMatrix[i, j] = covariance;
                     if (i != j)
@@ -158,7 +160,7 @@ namespace Cmdty.Core.Simulation.MultiFactor
             return covarianceMatrix.Cholesky().Factor;
         }
 
-        private static double CalcFactorCorrMultiplierContExt(double meanReversionsSum, double timeIncrement)
+        private static double CalcFactorContExt(double meanReversionsSum, double timeIncrement)
         {
             // TODO use some sort of tolerance?
             // ReSharper disable once CompareOfFloatsByEqualityOperator
@@ -170,12 +172,85 @@ namespace Cmdty.Core.Simulation.MultiFactor
 
         public MultiFactorSpotSimResults Simulate(int numSims)
         {
+            int numSteps = _forwardPrices.Length;
+            int numFactors = _spotVols.GetLength(1);
+            int randomNumDimensions = numFactors * numSteps;
+
+            // TODO remove these allocation and pass in arrays as parameters?
             var spotPrices = new double[numSteps, numSims];
             double[,,] markovFactors = new double[numSteps, numSims, numFactors];
 
-            throw new NotImplementedException();
+            // Avoid repeated heap allocation by instantiating arrays to be reused outside of loop
+            var thisStepFactors = new double[numFactors];
+            var factorStochasticTerm = new double[numFactors];
+            var independentStandardNormals = new double[randomNumDimensions];
+
+            for (int simIndex = 0; simIndex < numSims; simIndex++)
+            {
+                for (int i = 0; i < thisStepFactors.Length; i++)
+                    thisStepFactors[i] = 0.0;
+
+                _normalGenerator.Generate(independentStandardNormals, 0.0, 1.0);
+
+                int standardNormalStartIndex = 0;
+                for (int stepIndex = 0; stepIndex < numSteps; stepIndex++)
+                {
+                    CorrelateThisTimeStepRandoms(independentStandardNormals, standardNormalStartIndex, _factorCovarianceSquareRoots[stepIndex], factorStochasticTerm);
+
+                    double sumFactorTimesVol = 0.0;
+                    for (int factorIndex = 0; factorIndex < thisStepFactors.Length; factorIndex++)
+                    {
+                        double factorValue = thisStepFactors[factorIndex] * _reversionMultipliers[stepIndex, factorIndex] + factorStochasticTerm[factorIndex];
+                        thisStepFactors[factorIndex] = factorValue;
+                        markovFactors[stepIndex, stepIndex, factorIndex] = factorValue;
+                        sumFactorTimesVol += factorValue * _spotVols[stepIndex, factorIndex];
+                    }
+
+                    // TODO IMPORTANT - Math.Exp is slow, so look into vectorizing with MKL or Math.NET (if offered)
+                    spotPrices[stepIndex, simIndex] = _forwardPrices[stepIndex] * Math.Exp(_driftAdjustments[stepIndex] + sumFactorTimesVol);
+                    standardNormalStartIndex += numFactors;
+                }
+            }
 
             return new MultiFactorSpotSimResults(spotPrices, markovFactors);
+        }
+
+        // TODO use Span to take slice of iid vector
+        private void CorrelateThisTimeStepRandoms(double[] independentStandardNormals, int standardNormalStartIndex, 
+                        Matrix<double> factorCovarianceSquareRoot, double[] factorStochasticTerm)
+        {
+            throw new NotImplementedException();
+        }
+
+
+        public void ResetNormalGenerator()
+        {
+            _normalGenerator.Reset();
+        }
+
+        public void ResetNormalGeneratorSeed(int seed)
+        {
+            INormalGeneratorWithSeed normalGeneratorWithSeed = GetGeneratorWithSeed();
+            normalGeneratorWithSeed.ResetSeed(seed);
+        }
+
+        public void ResetNormalGeneratorRandomSeed()
+        {
+            INormalGeneratorWithSeed normalGeneratorWithSeed = GetGeneratorWithSeed();
+            normalGeneratorWithSeed.ResetRandomSeed();
+        }
+
+        private INormalGeneratorWithSeed GetGeneratorWithSeed()
+        {
+            // TODO test error message is ok
+            if (!(_normalGenerator is INormalGeneratorWithSeed normalGeneratorWithSeed))
+                throw new InvalidOperationException($"Type of {nameof(INormalGenerator)} injected into constructor, {_normalGenerator.GetType().Name}, does not implement {nameof(INormalGeneratorWithSeed)}.");
+            return normalGeneratorWithSeed;
+        }
+
+        public bool NormalGeneratorTypeHasSeed()
+        {
+            return _normalGenerator is INormalGeneratorWithSeed;
         }
 
     }
