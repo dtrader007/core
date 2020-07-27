@@ -59,7 +59,11 @@ namespace Cmdty.Core.Simulation.MultiFactor
 
             if (numPeriods == 0)
                 throw new ArgumentException(nameof(simulatedPeriods) + " argument cannot be empty.", nameof(simulatedPeriods));
-            
+
+            int numRandomDimensions = numPeriods * numFactors;
+            if (!_normalGenerator.MatchesDimensions(numRandomDimensions))
+                throw new ArgumentException($"Injected normal random generator is not set up to generate with {numRandomDimensions} dimensions.", nameof(normalGenerator));
+
             _forwardPrices = new double[numPeriods];
             _driftAdjustments = new double[numPeriods];
             _reversionMultipliers = new double[numPeriods, numFactors];

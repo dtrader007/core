@@ -70,6 +70,11 @@ namespace Cmdty.Core.Simulation
             _randomSource = _threadSafe.HasValue ? new MersenneTwister(_seed, _threadSafe.Value) : new MersenneTwister(_seed);
         }
 
+        public bool MatchesDimensions(int numDimensions)
+        {
+            return true;
+        }
+
         public void ResetSeed(int seed)
         {
             _randomSource = _threadSafe.HasValue ? new MersenneTwister(seed, _threadSafe.Value) : new MersenneTwister(seed);
