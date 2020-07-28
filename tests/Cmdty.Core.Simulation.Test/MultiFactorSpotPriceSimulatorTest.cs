@@ -23,6 +23,9 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 #endregion
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Cmdty.Core.Simulation.MultiFactor;
 using Cmdty.TimePeriodValueTypes;
 using Cmdty.TimeSeries;
@@ -47,8 +50,21 @@ namespace Cmdty.Core.Simulation.Test
         //  - Characteristic function
         //  - Correlation of increments
 
+        private readonly Dictionary<Day, double> _dailyForwardCurve;
+        private readonly DateTime _currentDate;
+        private readonly int _seed;
+
         public MultiFactorSpotPriceSimulatorTest()
         {
+            _dailyForwardCurve = new Dictionary<Day, double>
+            {
+                {new Day(2020, 07, 28), 56.85 },
+                {new Day(2020, 07, 29), 59.08 },
+                {new Day(2020, 07, 30), 62.453 }
+            };
+            _currentDate = new DateTime(2020, 07, 27);
+            _seed = 11;
+
             SimulateForZeroVolatility();
             SimulateForSingleNonMeanRevertingFactor();
         }
@@ -58,15 +74,42 @@ namespace Cmdty.Core.Simulation.Test
             
         }
 
-        private void SimulateForZeroVolatility()
+        private MultiFactorSpotSimResults<Day> SimulateForZeroVolatility()
         {
+            int numSims = 10;
             var multiFactorParameters = new MultiFactorParameters<Day>(new []
             {
-                new Factor<Day>(0.0, new DoubleTimeSeries<Day>(new Day(2020, 07, 28), new []{0.0, 0.0, 0.0})), 
+                new Factor<Day>(2.5, new DoubleTimeSeries<Day>(new Day(2020, 07, 28), new []{0.0, 0.0, 0.0})), 
             }, new double[,]{{1.0}});
 
+            Day[] simulatedPeriods = _dailyForwardCurve.Keys.OrderBy(day => day).ToArray();
+            var normalSimulator = new MersenneTwisterGenerator(_seed);
 
+            var simulator = new MultiFactorSpotPriceSimulator<Day>(multiFactorParameters, _currentDate, _dailyForwardCurve, 
+                                simulatedPeriods, TimeFunctions.Act365, normalSimulator);
+
+            return simulator.Simulate(numSims);
 
         }
+
+        [Test]
+        public void Simulate_ZeroVolatility_PricesEqualForwardCurve()
+        {
+            MultiFactorSpotSimResults<Day> simResults = SimulateForZeroVolatility();
+
+            double[,] simulatedSpotPrices = simResults.SpotPrices;
+            IReadOnlyList<Day> simulatedPeriods = simResults.SimulatedPeriods;
+
+            for (int periodIndex = 0; periodIndex < simulatedPeriods.Count; periodIndex++)
+            {
+                double forwardPrice = _dailyForwardCurve[simulatedPeriods[periodIndex]];
+                for (int simIndex = 0; simIndex < simulatedSpotPrices.GetLength(1); simIndex++)
+                {
+                    Assert.AreEqual(forwardPrice, simulatedSpotPrices[periodIndex, simIndex]);
+                }
+            }
+        }
+
+
     }
 }

@@ -27,7 +27,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cmdty.TimePeriodValueTypes;
-using Cmdty.TimeSeries;
 using JetBrains.Annotations;
 using MathNet.Numerics.LinearAlgebra;
 
@@ -42,7 +41,8 @@ namespace Cmdty.Core.Simulation.MultiFactor
         private readonly double[,] _reversionMultipliers;
         private readonly double[,] _spotVols;
         private readonly Matrix<double>[] _factorCovarianceSquareRoots;
-        
+        private readonly IReadOnlyList<T> _simulatedPeriods;
+
         // TODO add constructor which accepts TimeSeries<T, double> as type of forwardCurve
 
         public MultiFactorSpotPriceSimulator([NotNull] MultiFactorParameters<T> modelParameters, DateTime currentDateTime,
@@ -71,6 +71,7 @@ namespace Cmdty.Core.Simulation.MultiFactor
             _reversionMultipliers = new double[numPeriods, numFactors];
             _spotVols = new double[numPeriods, numFactors];
             _factorCovarianceSquareRoots = new Matrix<double>[numPeriods];
+            _simulatedPeriods = simulatedPeriodsArray;
 
             double timeToMaturityPrevious = 0;
             for (int i = 0; i < simulatedPeriodsArray.Length; i++)
@@ -88,7 +89,7 @@ namespace Cmdty.Core.Simulation.MultiFactor
                         throw new ArgumentException(nameof(simulatedPeriods) + $" argument cannot contain duplicated elements. More than one element with value {period} found.", nameof(simulatedPeriods));
                 }
 
-                if (forwardCurve.TryGetValue(period, out double forwardPrice))
+                if (!forwardCurve.TryGetValue(period, out double forwardPrice))
                     throw new ArgumentException($"Forward curve does not contain price for period {period}.", nameof(forwardCurve));
 
                 _forwardPrices[i] = forwardPrice;
@@ -176,7 +177,7 @@ namespace Cmdty.Core.Simulation.MultiFactor
             return (1 - Math.Exp(-meanReversionsSum * timeIncrement)) / meanReversionsSum;
         }
 
-        public MultiFactorSpotSimResults Simulate(int numSims)
+        public MultiFactorSpotSimResults<T> Simulate(int numSims)
         {
             int numSteps = _forwardPrices.Length;
             int numFactors = _spotVols.GetLength(1);
@@ -218,16 +219,24 @@ namespace Cmdty.Core.Simulation.MultiFactor
                 }
             }
 
-            return new MultiFactorSpotSimResults(spotPrices, markovFactors);
+            return new MultiFactorSpotSimResults<T>(spotPrices, markovFactors, _simulatedPeriods);
         }
 
         // TODO use Span to take slice of iid vector
         private void CorrelateThisTimeStepRandoms(double[] independentStandardNormals, int standardNormalStartIndex, 
                         Matrix<double> factorCovarianceSquareRoot, double[] factorStochasticTerm)
         {
-            throw new NotImplementedException();
+            // TODO either vectorize this for change factorCovarianceSquareRoot to an array
+            for (int i = 0; i < factorStochasticTerm.Length; i++)
+            {
+                double sumProduct = 0.0;
+                for (int j = 0; j <= i; j++) // Cholesky is lower triangular
+                {
+                    sumProduct += factorCovarianceSquareRoot[i, j] * independentStandardNormals[standardNormalStartIndex + j];
+                }
+                factorStochasticTerm[i] = sumProduct;
+            }
         }
-
 
         public void ResetNormalGenerator()
         {

@@ -1,5 +1,5 @@
 ﻿#region License
-// Copyright (c) 2020 Jake Fowler
+// Copyright (c) 2019 Jake Fowler
 //
 // Permission is hereby granted, free of charge, to any person 
 // obtaining a copy of this software and associated documentation 
@@ -24,27 +24,16 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using Cmdty.TimePeriodValueTypes;
-using JetBrains.Annotations;
 
-namespace Cmdty.Core.Simulation.MultiFactor
+namespace Cmdty.Core.Simulation
 {
-    public sealed class MultiFactorSpotSimResults<T>
-        where T : ITimePeriod<T>
+    public static class TimeFunctions
     {
-        public double[,] SpotPrices { get; }
-        public double[,,] MarkovFactors { get; }
-        public IReadOnlyList<T> SimulatedPeriods { get; }
 
-        public MultiFactorSpotSimResults([NotNull] double[,] spotPrices, [NotNull] double[,,] markovFactors,
-            [NotNull] IEnumerable<T> simulatedPeriods)
+        public static double Act365(DateTime from, DateTime to)
         {
-            if (simulatedPeriods == null) throw new ArgumentNullException(nameof(simulatedPeriods));
-            SpotPrices = spotPrices ?? throw new ArgumentNullException(nameof(spotPrices));
-            MarkovFactors = markovFactors ?? throw new ArgumentNullException(nameof(markovFactors));
-            SimulatedPeriods = simulatedPeriods.ToArray();
+            return to.Subtract(from).Days / 365.0;
         }
+
     }
 }
