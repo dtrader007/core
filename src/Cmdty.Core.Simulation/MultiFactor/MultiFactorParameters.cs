@@ -50,7 +50,7 @@ namespace Cmdty.Core.Simulation.MultiFactor
             // TODO full check of correlation, e.g. diagonals 1, within [-1, 1]. Positive semi-definite?
         }
 
-        public int NumFactors => FactorCorrelations.Length;
+        public int NumFactors => FactorCorrelations.GetLength(0);
 
     }
 }
