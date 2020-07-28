@@ -334,7 +334,7 @@ src/Cmdty.Curves.Python/curves/lib/*
 
 # C# test results put here
 temp/
-coverage.cobertura.xml
+coverage.*cobertura.xml
 
 # Files generate during distribution package creation
 #src/Cmdty.Curves.Python/dist/*

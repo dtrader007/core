@@ -43,8 +43,10 @@ namespace Cmdty.Core.Simulation.MultiFactor
         private readonly double[,] _spotVols;
         private readonly Matrix<double>[] _factorCovarianceSquareRoots;
         
+        // TODO add constructor which accepts TimeSeries<T, double> as type of forwardCurve
+
         public MultiFactorSpotPriceSimulator([NotNull] MultiFactorParameters<T> modelParameters, DateTime currentDateTime,
-            [NotNull] TimeSeries<T, double> forwardCurve, [NotNull] IEnumerable<T> simulatedPeriods, 
+            [NotNull] Dictionary<T, double> forwardCurve, [NotNull] IEnumerable<T> simulatedPeriods, 
             Func<DateTime, DateTime, double> timeFunc, [NotNull] INormalGenerator normalGenerator) // TODO pass in random number generator factory
         {
             if (modelParameters == null) throw new ArgumentNullException(nameof(modelParameters));

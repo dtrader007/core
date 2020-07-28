@@ -43,7 +43,7 @@ steps:
     condition: succeededOrFailed()
     inputs:
       codeCoverageTool: 'cobertura'
-      summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.cobertura.xml'
+      summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.netcoreapp3.1.cobertura.xml'
 
   - task: CopyFiles@2
     displayName: Copy NuGet package to Artifact Staging Directory

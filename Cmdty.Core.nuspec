@@ -15,10 +15,10 @@
 		<repository url="https://github.com/cmdty/core" />
 		<dependencies>
 		  <group targetFramework=".NETFramework4.5">
-        <dependency id="Cmdty.Curves" version="0.1.0-beta1" exclude="Build,Analyzers" />
+        <dependency id="Cmdty.TimeSeries" version="1.0.0-alpha1" exclude="Build,Analyzers" />
       </group>
 		  <group targetFramework=".NETStandard2.0">
-        <dependency id="Cmdty.Curves" version="0.1.0-beta1" exclude="Build,Analyzers" />
+        <dependency id="Cmdty.TimeSeries" version="1.0.0-alpha1" exclude="Build,Analyzers" />
       </group>
 		</dependencies>
 	</metadata>
