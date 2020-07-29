@@ -73,7 +73,7 @@ namespace Cmdty.Core.Simulation.Test
 
         private void SimulateForSingleNonMeanRevertingFactor()
         {
-            int numSims = 1000000;
+            int numSims = 100000;
             var multiFactorParameters = new MultiFactorParameters<Day>(new[]
             {
                 new Factor<Day>(0.0, new DoubleTimeSeries<Day>(new Day(2021, 07, 28), new []{0.45, 0.42, 0.33})),
@@ -94,7 +94,7 @@ namespace Cmdty.Core.Simulation.Test
 
         private void SimulateForTwoNonMeanRevertingFactors()
         {
-            int numSims = 1000000;
+            int numSims = 100000;
             var multiFactorParameters = new MultiFactorParameters<Day>(new[]
             {
                 new Factor<Day>(0.0, new DoubleTimeSeries<Day>(new Day(2021, 07, 28), new []{0.15, 0.12, 0.13})),
@@ -107,7 +107,7 @@ namespace Cmdty.Core.Simulation.Test
 
             Day[] simulatedPeriods = _dailyForwardCurve.Keys.OrderBy(day => day).ToArray();
             var normalSimulator = new MersenneTwisterGenerator(_seed);
-
+ 
             var simulator = new MultiFactorSpotPriceSimulator<Day>(multiFactorParameters, _currentDate, _dailyForwardCurve,
                 simulatedPeriods, TimeFunctions.Act365, normalSimulator);
 
@@ -179,9 +179,16 @@ namespace Cmdty.Core.Simulation.Test
                 double forwardPrice = forwardCurve[simulatedPeriods[periodIndex]];
                 ReadOnlyMemory<double> simulatedSpotPrices = simResults.SpotPricesForStepIndex(periodIndex);
 
-                double averageSimSpotPrice = Mean(simulatedSpotPrices.Span);
+                (double averageSimSpotPrice, double sampleStanDev) = SampleStandardDeviationAndMean(simulatedSpotPrices.Span);
+                double standardError = sampleStanDev / Math.Sqrt(simResults.NumSims);
+
                 Console.WriteLine("forward price: " + forwardPrice);
                 Console.WriteLine("average sim price: " + averageSimSpotPrice);
+                double error = averageSimSpotPrice - forwardPrice;
+                Console.WriteLine("error: " + error);
+                Console.WriteLine("standard error: " + standardError);
+                Console.WriteLine("num stan devs: " + error / standardError);
+                Console.WriteLine();
 
             }
         }
@@ -195,6 +202,20 @@ namespace Cmdty.Core.Simulation.Test
                 sum += span[i];
             }
             return sum / span.Length;
+        }
+
+        private static (double Mean, double SampleStanDev) SampleStandardDeviationAndMean(ReadOnlySpan<double> span)
+        {
+            double mean = Mean(span);
+            double variance = 0.0;
+            // ReSharper disable once ForCanBeConvertedToForeach
+            for (int i = 0; i < span.Length; i++)
+            {
+                variance += Math.Pow(span[i] - mean, 2);
+            }
+
+            double stanDev = Math.Sqrt(variance / (span.Length - 1));
+            return (Mean: mean, SampleStanDev: stanDev);
         }
 
     }

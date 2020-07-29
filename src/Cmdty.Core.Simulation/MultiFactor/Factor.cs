@@ -23,6 +23,8 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 #endregion
 
+using System.Collections.Generic;
+using System.Linq;
 using Cmdty.TimePeriodValueTypes;
 using Cmdty.TimeSeries;
 
@@ -32,12 +34,19 @@ namespace Cmdty.Core.Simulation.MultiFactor
         where T : ITimePeriod<T>
     {
         public double MeanReversion { get; }
-        public DoubleTimeSeries<T> Volatility { get; }
+        public IReadOnlyDictionary<T, double> Volatility { get; }
 
         public Factor(double meanReversion, DoubleTimeSeries<T> volatility)
         {
             MeanReversion = meanReversion;
             Volatility = volatility;
         }
+
+        public Factor(double meanReversion, IDictionary<T, double> volatility)
+        {
+            MeanReversion = meanReversion;
+            Volatility = volatility.ToDictionary(pair => pair.Key, pair => pair.Value);
+        }
+
     }
 }

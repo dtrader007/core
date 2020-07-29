@@ -129,7 +129,7 @@ namespace Cmdty.Core.Simulation.MultiFactor
                 for (int j = 0; j < modelParameters.NumFactors; j++)
                 {
                     Factor<T> factor2 = modelParameters.Factors[j];
-                    if (!factor1.Volatility.TryGetValue(period, out double vol2))
+                    if (!factor2.Volatility.TryGetValue(period, out double vol2))
                         throw new ArgumentException($"Factor {j} of multi-factor model parameters does not contain vol for period {period}.",
                             nameof(modelParameters));
                     double meanReversion2 = factor2.MeanReversion;
