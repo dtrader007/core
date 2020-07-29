@@ -53,6 +53,8 @@ namespace Cmdty.Core.Simulation.Test
         private readonly Dictionary<Day, double> _dailyForwardCurve;
         private readonly DateTime _currentDate;
         private readonly int _seed;
+        private MultiFactorSpotSimResults<Day> _singleNonMeanRevertingFactorResults;
+        private MultiFactorSpotSimResults<Day> _twoNonMeanRevertingFactorsResults;
 
         public MultiFactorSpotPriceSimulatorTest()
         {
@@ -65,13 +67,52 @@ namespace Cmdty.Core.Simulation.Test
             _currentDate = new DateTime(2020, 07, 27);
             _seed = 11;
 
-            SimulateForZeroVolatility();
             SimulateForSingleNonMeanRevertingFactor();
+            SimulateForTwoNonMeanRevertingFactors();
         }
 
         private void SimulateForSingleNonMeanRevertingFactor()
         {
-            
+            int numSims = 1000000;
+            var multiFactorParameters = new MultiFactorParameters<Day>(new[]
+            {
+                new Factor<Day>(0.0, new DoubleTimeSeries<Day>(new Day(2021, 07, 28), new []{0.45, 0.42, 0.33})),
+            }, new double[,]
+                            {
+                                {1.0},
+                            });
+
+            Day[] simulatedPeriods = _dailyForwardCurve.Keys.OrderBy(day => day).ToArray();
+            var normalSimulator = new MersenneTwisterGenerator(_seed);
+
+            var simulator = new MultiFactorSpotPriceSimulator<Day>(multiFactorParameters, _currentDate, _dailyForwardCurve,
+                simulatedPeriods, TimeFunctions.Act365, normalSimulator);
+
+            _singleNonMeanRevertingFactorResults = simulator.Simulate(numSims);
+
+        }
+
+        private void SimulateForTwoNonMeanRevertingFactors()
+        {
+            int numSims = 1000000;
+            var multiFactorParameters = new MultiFactorParameters<Day>(new[]
+            {
+                new Factor<Day>(0.0, new DoubleTimeSeries<Day>(new Day(2021, 07, 28), new []{0.15, 0.12, 0.13})),
+                new Factor<Day>(0.0, new DoubleTimeSeries<Day>(new Day(2021, 07, 28), new []{0.11, 0.19, 0.15}))
+            }, new double[,]
+            {
+                {1.0, 0.74},
+                {0.74, 1.0},
+            });
+
+            Day[] simulatedPeriods = _dailyForwardCurve.Keys.OrderBy(day => day).ToArray();
+            var normalSimulator = new MersenneTwisterGenerator(_seed);
+
+            var simulator = new MultiFactorSpotPriceSimulator<Day>(multiFactorParameters, _currentDate, _dailyForwardCurve,
+                simulatedPeriods, TimeFunctions.Act365, normalSimulator);
+
+            _twoNonMeanRevertingFactorsResults = simulator.Simulate(numSims);
+
         }
 
         private MultiFactorSpotSimResults<Day> SimulateForZeroVolatility()
@@ -116,6 +157,45 @@ namespace Cmdty.Core.Simulation.Test
             }
         }
 
+        [Test]
+        public void Simulate_SingleNonMeanRevertingFactor_ExpectedSpotPriceEqualsForwardPrice()
+        {
+            AssertAverageSimSpotPricesEqualsForwardPrice(_singleNonMeanRevertingFactorResults, _dailyForwardCurve);
+        }
+
+        [Test]
+        public void Simulate_TwoNonMeanRevertingFactors_ExpectedSpotPriceEqualsForwardPrice()
+        {
+            AssertAverageSimSpotPricesEqualsForwardPrice(_twoNonMeanRevertingFactorsResults, _dailyForwardCurve);
+        }
+
+        private static void AssertAverageSimSpotPricesEqualsForwardPrice<T>(MultiFactorSpotSimResults<T> simResults, Dictionary<T, double> forwardCurve)
+            where T : ITimePeriod<T>
+        {
+
+            IReadOnlyList<T> simulatedPeriods = simResults.SimulatedPeriods;
+            for (int periodIndex = 0; periodIndex < simulatedPeriods.Count; periodIndex++)
+            {
+                double forwardPrice = forwardCurve[simulatedPeriods[periodIndex]];
+                ReadOnlyMemory<double> simulatedSpotPrices = simResults.SpotPricesForStepIndex(periodIndex);
+
+                double averageSimSpotPrice = Mean(simulatedSpotPrices.Span);
+                Console.WriteLine("forward price: " + forwardPrice);
+                Console.WriteLine("average sim price: " + averageSimSpotPrice);
+
+            }
+        }
+
+        private static double Mean(ReadOnlySpan<double> span)
+        {
+            double sum = 0;
+            // ReSharper disable once ForCanBeConvertedToForeach
+            for (int i = 0; i < span.Length; i++)
+            {
+                sum += span[i];
+            }
+            return sum / span.Length;
+        }
 
     }
 }
