@@ -184,8 +184,8 @@ namespace Cmdty.Core.Simulation.MultiFactor
             int randomNumDimensions = numFactors * numSteps;
 
             // TODO remove these allocation and pass in arrays as parameters?
-            var spotPrices = new double[numSteps, numSims];
-            double[,,] markovFactors = new double[numSteps, numSims, numFactors];
+            var spotPrices = new double[numSteps * numSims];
+            var markovFactors = new double[numSteps * numSims * numFactors];
 
             // Avoid repeated heap allocation by instantiating arrays to be reused outside of loop
             var thisStepFactors = new double[numFactors];
@@ -209,17 +209,20 @@ namespace Cmdty.Core.Simulation.MultiFactor
                     {
                         double factorValue = thisStepFactors[factorIndex] * _reversionMultipliers[stepIndex, factorIndex] + factorStochasticTerm[factorIndex];
                         thisStepFactors[factorIndex] = factorValue;
-                        markovFactors[stepIndex, stepIndex, factorIndex] = factorValue;
+                        // TODO test this indexing is correct
+                        // Put all simulations for same time step next to each other as this is how they will be access in LSMC
+                        markovFactors[stepIndex * numFactors * numSims + simIndex * numFactors + factorIndex] = factorValue;
                         sumFactorTimesVol += factorValue * _spotVols[stepIndex, factorIndex];
                     }
 
                     // TODO IMPORTANT - Math.Exp is slow, so look into vectorizing with MKL or Math.NET (if offered)
-                    spotPrices[stepIndex, simIndex] = _forwardPrices[stepIndex] * Math.Exp(_driftAdjustments[stepIndex] + sumFactorTimesVol);
+                    // Put all simulations for same time step next to each other as this is how they will be access in LSMC
+                    spotPrices[stepIndex * numSims + simIndex] = _forwardPrices[stepIndex] * Math.Exp(_driftAdjustments[stepIndex] + sumFactorTimesVol);
                     standardNormalStartIndex += numFactors;
                 }
             }
-
-            return new MultiFactorSpotSimResults<T>(spotPrices, markovFactors, _simulatedPeriods);
+            
+            return new MultiFactorSpotSimResults<T>(spotPrices, markovFactors, _simulatedPeriods, numSteps, numSims, numFactors);
         }
 
         // TODO use Span to take slice of iid vector

@@ -104,15 +104,14 @@ namespace Cmdty.Core.Simulation.Test
         {
             MultiFactorSpotSimResults<Day> simResults = SimulateForZeroVolatility();
 
-            double[,] simulatedSpotPrices = simResults.SpotPrices;
             IReadOnlyList<Day> simulatedPeriods = simResults.SimulatedPeriods;
-
             for (int periodIndex = 0; periodIndex < simulatedPeriods.Count; periodIndex++)
             {
                 double forwardPrice = _dailyForwardCurve[simulatedPeriods[periodIndex]];
-                for (int simIndex = 0; simIndex < simulatedSpotPrices.GetLength(1); simIndex++)
+                ReadOnlyMemory<double> simulatedSpotPrices = simResults.SpotPricesForStepIndex(periodIndex);
+                for (int simIndex = 0; simIndex < simulatedSpotPrices.Length; simIndex++)
                 {
-                    Assert.AreEqual(forwardPrice, simulatedSpotPrices[periodIndex, simIndex]);
+                    Assert.AreEqual(forwardPrice, simulatedSpotPrices.Span[simIndex]);
                 }
             }
         }
