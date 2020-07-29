@@ -21,16 +21,16 @@
         <dependency id="Cmdty.TimeSeries" version="1.0.0-alpha1" exclude="Build,Analyzers" />
       </group>
       <group targetFramework=".NETFramework4.5">
-        <dependency id="MathNet.Numerics.Signed" Version="4.11.0" exclude="Build,Analyzers" />
+        <dependency id="MathNet.Numerics.Signed" version="4.11.0" exclude="Build,Analyzers" />
       </group>
       <group targetFramework=".NETStandard2.0">
-        <dependency id="MathNet.Numerics.Signed" Version="4.11.0" exclude="Build,Analyzers" />
+        <dependency id="MathNet.Numerics.Signed" version="4.11.0" exclude="Build,Analyzers" />
       </group>
       <group targetFramework=".NETFramework4.5">
-        <dependency id="System.Memory" Version="4.5.4" exclude="Build,Analyzers" />
+        <dependency id="System.Memory" version="4.5.4" exclude="Build,Analyzers" />
       </group>
       <group targetFramework=".NETStandard2.0">
-        <dependency id="System.Memory" Version="4.5.4" exclude="Build,Analyzers" />
+        <dependency id="System.Memory" version="4.5.4" exclude="Build,Analyzers" />
       </group>
 		</dependencies>
 	</metadata>
