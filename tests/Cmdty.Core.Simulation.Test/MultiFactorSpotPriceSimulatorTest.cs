@@ -1,3 +1,4 @@
+//#define PRINT_TEST_SIM_INFO
 #region License
 // Copyright (c) 2019 Jake Fowler
 //
@@ -28,7 +29,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Cmdty.Core.Simulation.MultiFactor;
 using Cmdty.TimePeriodValueTypes;
-using Cmdty.TimeSeries;
 using NUnit.Framework;
 
 namespace Cmdty.Core.Simulation.Test
@@ -42,6 +42,7 @@ namespace Cmdty.Core.Simulation.Test
         //  - Zero vol - simulation equals curve
         //  - Single non-mean reverting factor
         //  - Two non-mean reverting factors
+        //  - Two factors with -1 correlation
         //  - One more factors with high mean reversion:
         //      - Standard deviation of increments far in future go to zero
         // Outputs to test:
@@ -54,30 +55,84 @@ namespace Cmdty.Core.Simulation.Test
         private readonly DateTime _currentDate;
         private readonly int _seed;
         private MultiFactorSpotSimResults<Day> _singleNonMeanRevertingFactorResults;
+        private MultiFactorParameters<Day> _singleNonMeanRevertingFactorParams;
         private MultiFactorSpotSimResults<Day> _twoNonMeanRevertingFactorsResults;
+        private MultiFactorParameters<Day> _twoNonMeanRevertingFactorsParams;
+
+        private MultiFactorSpotSimResults<Day> _meanAndNonMeanRevertingFactorsResults;
+        private MultiFactorParameters<Day> _meanAndNonMeanRevertingFactorsParams;
+
 
         public MultiFactorSpotPriceSimulatorTest()
         {
+            _seed = 12;
+            _currentDate = new DateTime(2020, 07, 27);
+
             _dailyForwardCurve = new Dictionary<Day, double>
             {
-                {new Day(2021, 07, 28), 56.85 },
-                {new Day(2021, 07, 29), 59.08 },
+                {new Day(2020, 08, 01), 56.85 },
+                {new Day(2021, 01, 15), 59.08 },
                 {new Day(2021, 07, 30), 62.453 }
             };
-            _currentDate = new DateTime(2020, 07, 27);
-            _seed = 11;
 
             SimulateForSingleNonMeanRevertingFactor();
             SimulateForTwoNonMeanRevertingFactors();
+            SimulateForMeanAndNonMeanRevertingFactors();
+        }
+
+        private void SimulateForMeanAndNonMeanRevertingFactors()
+        {
+            int numSims = 100000;
+            
+            _meanAndNonMeanRevertingFactorsParams = new MultiFactorParameters<Day>(new[]
+            {
+                new Factor<Day>(0.0, new Dictionary<Day, double>
+                {
+                    {new Day(2020, 08, 01), 0.35},
+                    {new Day(2021, 01, 15), 0.29},
+                    {new Day(2021, 07, 30), 0.32}
+                }),
+                new Factor<Day>(2.5, new Dictionary<Day, double>
+                {
+                    {new Day(2020, 08, 01), 0.15},
+                    {new Day(2021, 01, 15), 0.18},
+                    {new Day(2021, 07, 30), 0.21}
+                }),
+                new Factor<Day>(16.2, new Dictionary<Day, double>
+                {
+                    {new Day(2020, 08, 01), 0.95},
+                    {new Day(2021, 01, 15), 0.92},
+                    {new Day(2021, 07, 30), 0.89}
+                })
+            }, new[,]
+            {
+                {1.0, 0.6, 0.3},
+                {0.6, 1.0, 0.4},
+                {0.3, 0.4, 1.0}
+            });
+
+            Day[] simulatedPeriods = _dailyForwardCurve.Keys.OrderBy(day => day).ToArray();
+            var normalSimulator = new MersenneTwisterGenerator(_seed);
+
+            var simulator = new MultiFactorSpotPriceSimulator<Day>(_meanAndNonMeanRevertingFactorsParams, _currentDate, _dailyForwardCurve,
+                simulatedPeriods, TimeFunctions.Act365, normalSimulator);
+
+            _meanAndNonMeanRevertingFactorsResults = simulator.Simulate(numSims);
+
         }
 
         private void SimulateForSingleNonMeanRevertingFactor()
         {
             int numSims = 100000;
-            var multiFactorParameters = new MultiFactorParameters<Day>(new[]
+            _singleNonMeanRevertingFactorParams = new MultiFactorParameters<Day>(new[]
             {
-                new Factor<Day>(0.0, new DoubleTimeSeries<Day>(new Day(2021, 07, 28), new []{0.45, 0.42, 0.33})),
-            }, new double[,]
+                new Factor<Day>(0.0, new Dictionary<Day, double>
+                {
+                    {new Day(2020, 08, 01), 0.45},
+                    {new Day(2021, 01, 15), 0.42},
+                    {new Day(2021, 07, 30), 0.33}
+                })
+            }, new [,]
                             {
                                 {1.0},
                             });
@@ -85,7 +140,7 @@ namespace Cmdty.Core.Simulation.Test
             Day[] simulatedPeriods = _dailyForwardCurve.Keys.OrderBy(day => day).ToArray();
             var normalSimulator = new MersenneTwisterGenerator(_seed);
 
-            var simulator = new MultiFactorSpotPriceSimulator<Day>(multiFactorParameters, _currentDate, _dailyForwardCurve,
+            var simulator = new MultiFactorSpotPriceSimulator<Day>(_singleNonMeanRevertingFactorParams, _currentDate, _dailyForwardCurve,
                 simulatedPeriods, TimeFunctions.Act365, normalSimulator);
 
             _singleNonMeanRevertingFactorResults = simulator.Simulate(numSims);
@@ -95,11 +150,21 @@ namespace Cmdty.Core.Simulation.Test
         private void SimulateForTwoNonMeanRevertingFactors()
         {
             int numSims = 100000;
-            var multiFactorParameters = new MultiFactorParameters<Day>(new[]
+            _twoNonMeanRevertingFactorsParams = new MultiFactorParameters<Day>(new[]
             {
-                new Factor<Day>(0.0, new DoubleTimeSeries<Day>(new Day(2021, 07, 28), new []{0.15, 0.12, 0.13})),
-                new Factor<Day>(0.0, new DoubleTimeSeries<Day>(new Day(2021, 07, 28), new []{0.11, 0.19, 0.15}))
-            }, new double[,]
+                new Factor<Day>(0.0, new Dictionary<Day, double>
+                    {
+                        {new Day(2020, 08, 01), 0.15},
+                        {new Day(2021, 01, 15), 0.12},
+                        {new Day(2021, 07, 30), 0.13}
+                    }),
+                new Factor<Day>(0.0, new Dictionary<Day, double>
+                    {
+                        {new Day(2020, 08, 01), 0.11},
+                        {new Day(2021, 01, 15), 0.19},
+                        {new Day(2021, 07, 30), 0.15}
+                    })
+            }, new [,]
             {
                 {1.0, 0.74},
                 {0.74, 1.0},
@@ -108,7 +173,7 @@ namespace Cmdty.Core.Simulation.Test
             Day[] simulatedPeriods = _dailyForwardCurve.Keys.OrderBy(day => day).ToArray();
             var normalSimulator = new MersenneTwisterGenerator(_seed);
  
-            var simulator = new MultiFactorSpotPriceSimulator<Day>(multiFactorParameters, _currentDate, _dailyForwardCurve,
+            var simulator = new MultiFactorSpotPriceSimulator<Day>(_twoNonMeanRevertingFactorsParams, _currentDate, _dailyForwardCurve,
                 simulatedPeriods, TimeFunctions.Act365, normalSimulator);
 
             _twoNonMeanRevertingFactorsResults = simulator.Simulate(numSims);
@@ -118,12 +183,18 @@ namespace Cmdty.Core.Simulation.Test
         private MultiFactorSpotSimResults<Day> SimulateForZeroVolatility()
         {
             int numSims = 10;
+            var zeroFactorVols = new Dictionary<Day, double>
+            {
+                {new Day(2020, 08, 01), 0.0},
+                {new Day(2021, 01, 15), 0.0},
+                {new Day(2021, 07, 30), 0.0}
+            };
             var multiFactorParameters = new MultiFactorParameters<Day>(new []
             {
-                new Factor<Day>(0.0, new DoubleTimeSeries<Day>(new Day(2021, 07, 28), new []{0.0, 0.0, 0.0})), 
-                new Factor<Day>(2.5, new DoubleTimeSeries<Day>(new Day(2021, 07, 28), new []{0.0, 0.0, 0.0})), 
-                new Factor<Day>(16.2, new DoubleTimeSeries<Day>(new Day(2021, 07, 28), new []{0.0, 0.0, 0.0})), 
-            }, new double[,]
+                new Factor<Day>(0.0, zeroFactorVols), 
+                new Factor<Day>(2.5, zeroFactorVols), 
+                new Factor<Day>(16.2, zeroFactorVols) 
+            }, new [,]
                             {
                                 {1.0, 0.6, 0.3},
                                 {0.6, 1.0, 0.4},
@@ -158,18 +229,24 @@ namespace Cmdty.Core.Simulation.Test
         }
 
         [Test]
-        public void Simulate_SingleNonMeanRevertingFactor_ExpectedSpotPriceEqualsForwardPrice()
+        public void Simulate_SingleNonMeanRevertingFactor_Within3StanDevsOfForwardPrice()
         {
-            AssertAverageSimSpotPricesEqualsForwardPrice(_singleNonMeanRevertingFactorResults, _dailyForwardCurve);
+            AssertAverageSimSpotPricesWithin3StanDevsOfForwardPrice(_singleNonMeanRevertingFactorResults, _dailyForwardCurve);
         }
 
         [Test]
-        public void Simulate_TwoNonMeanRevertingFactors_ExpectedSpotPriceEqualsForwardPrice()
+        public void Simulate_MeanAndNonMeanRevertingFactors_Within3StanDevsOfForwardPrice()
         {
-            AssertAverageSimSpotPricesEqualsForwardPrice(_twoNonMeanRevertingFactorsResults, _dailyForwardCurve);
+            AssertAverageSimSpotPricesWithin3StanDevsOfForwardPrice(_meanAndNonMeanRevertingFactorsResults, _dailyForwardCurve);
         }
 
-        private static void AssertAverageSimSpotPricesEqualsForwardPrice<T>(MultiFactorSpotSimResults<T> simResults, Dictionary<T, double> forwardCurve)
+        [Test]
+        public void Simulate_TwoNonMeanRevertingFactors_Within3StanDevsOfForwardPrice()
+        {
+            AssertAverageSimSpotPricesWithin3StanDevsOfForwardPrice(_twoNonMeanRevertingFactorsResults, _dailyForwardCurve);
+        }
+
+        private static void AssertAverageSimSpotPricesWithin3StanDevsOfForwardPrice<T>(MultiFactorSpotSimResults<T> simResults, Dictionary<T, double> forwardCurve)
             where T : ITimePeriod<T>
         {
 
@@ -181,15 +258,18 @@ namespace Cmdty.Core.Simulation.Test
 
                 (double averageSimSpotPrice, double sampleStanDev) = SampleStandardDeviationAndMean(simulatedSpotPrices.Span);
                 double standardError = sampleStanDev / Math.Sqrt(simResults.NumSims);
+                double error = averageSimSpotPrice - forwardPrice;
+                double numStanDevsError = error / standardError;
+                Assert.LessOrEqual(numStanDevsError, 3.0);
 
+#if PRINT_TEST_SIM_INFO
                 Console.WriteLine("forward price: " + forwardPrice);
                 Console.WriteLine("average sim price: " + averageSimSpotPrice);
-                double error = averageSimSpotPrice - forwardPrice;
                 Console.WriteLine("error: " + error);
                 Console.WriteLine("standard error: " + standardError);
                 Console.WriteLine("num stan devs: " + error / standardError);
                 Console.WriteLine();
-
+#endif
             }
         }
 
