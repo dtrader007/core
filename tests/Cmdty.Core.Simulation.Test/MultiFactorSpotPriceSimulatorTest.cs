@@ -29,6 +29,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Cmdty.Core.Simulation.MultiFactor;
 using Cmdty.TimePeriodValueTypes;
+using MathNet.Numerics.LinearAlgebra;
+using MathNet.Numerics.Statistics;
 using NUnit.Framework;
 
 namespace Cmdty.Core.Simulation.Test
@@ -50,6 +52,9 @@ namespace Cmdty.Core.Simulation.Test
         //  - Variance is expected
         //  - Characteristic function
         //  - Correlation of increments
+        //  - Properties of factors:
+        //      - Mean with 3 sds of 0 (only if mean reversion is greater than 0?)
+        //      - Correlation of 1 day change equals in put correlation
 
         private readonly Dictionary<Day, double> _dailyForwardCurve;
         private readonly DateTime _currentDate;
@@ -123,7 +128,7 @@ namespace Cmdty.Core.Simulation.Test
 
         private void SimulateForSingleNonMeanRevertingFactor()
         {
-            int numSims = 100000;
+            int numSims = 1000000;
             _singleNonMeanRevertingFactorParams = new MultiFactorParameters<Day>(new[]
             {
                 new Factor<Day>(0.0, new Dictionary<Day, double>
@@ -246,6 +251,22 @@ namespace Cmdty.Core.Simulation.Test
             AssertAverageSimSpotPricesWithin3StanDevsOfForwardPrice(_twoNonMeanRevertingFactorsResults, _dailyForwardCurve);
         }
 
+        [Test]
+        public void Simulate_SingleNonMeanRevertingFactor_StandDevEqualsVolSquRootTimeToMaturity()
+        {
+            for (int i = 0; i < _singleNonMeanRevertingFactorResults.NumSteps; i++)
+            {
+                ReadOnlyMemory<double> simulatedSpotPrices = _singleNonMeanRevertingFactorResults.SpotPricesForStepIndex(i);
+                Day period = _singleNonMeanRevertingFactorResults.SimulatedPeriods[i];
+                double factorVolForPeriod = _singleNonMeanRevertingFactorParams.Factors.Single().Volatility[period];
+                double timeToMaturity = TimeFunctions.Act365(_currentDate, period.Start);
+                double expectedLogStanDev = factorVolForPeriod * Math.Sqrt(timeToMaturity);
+                double simulatedLogStanDev = LogStandardDeviation(simulatedSpotPrices.Span);
+                double percentageError = Math.Abs((simulatedLogStanDev - expectedLogStanDev) / expectedLogStanDev);
+                Assert.LessOrEqual(percentageError, 0.001);
+            }
+        }
+
         private static void AssertAverageSimSpotPricesWithin3StanDevsOfForwardPrice<T>(MultiFactorSpotSimResults<T> simResults, Dictionary<T, double> forwardCurve)
             where T : ITimePeriod<T>
         {
@@ -297,6 +318,15 @@ namespace Cmdty.Core.Simulation.Test
             double stanDev = Math.Sqrt(variance / (span.Length - 1));
             return (Mean: mean, SampleStanDev: stanDev);
         }
+
+        private static double LogStandardDeviation(ReadOnlySpan<double> span)
+        {
+            var logVector = Vector<double>.Build.DenseOfArray(span.ToArray());
+            logVector.PointwiseLog(logVector);
+
+            return logVector.StandardDeviation();
+        }
+
 
     }
 }
