@@ -211,7 +211,7 @@ namespace Cmdty.Core.Simulation.MultiFactor
                         thisStepFactors[factorIndex] = factorValue;
                         // TODO test this indexing is correct
                         // Put all simulations for same time step next to each other as this is how they will be access in LSMC
-                        markovFactors[stepIndex * numFactors * numSims + simIndex * numFactors + factorIndex] = factorValue;
+                        markovFactors[stepIndex * numFactors * numSims + factorIndex * numSims + simIndex] = factorValue;
                         sumFactorTimesVol += factorValue * _spotVols[stepIndex, factorIndex];
                     }
 

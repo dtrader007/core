@@ -93,20 +93,10 @@ namespace Cmdty.Core.Simulation.MultiFactor
             if (factorIndex < 0 || factorIndex >= NumFactors)
                 throw new ArgumentException($"Factor index must be in the interval [0, {NumFactors}].", nameof(factorIndex));
 
-
-            throw new NotImplementedException();
+            int segmentStartIndex = stepIndex * NumSims * NumFactors + factorIndex * NumSims;
+            return new ReadOnlyMemory<double>(MarkovFactors, segmentStartIndex, NumSims);
         }
 
-        public ReadOnlyMemory<double> AllMarkovFactorsForPeriod(T period)
-        {
-            throw new NotImplementedException();
-        }
-
-        public ReadOnlyMemory<double> AllMarkovFactorsForStepIndex(int stepIndex)
-        {
-            throw new NotImplementedException();
-        }
-
-        // TODO methods for getting all simulated markov factors and spot prices for a particular sim number
+        // TODO methods for getting all simulated markov factors and spot prices for a particular sim number?
     }
 }

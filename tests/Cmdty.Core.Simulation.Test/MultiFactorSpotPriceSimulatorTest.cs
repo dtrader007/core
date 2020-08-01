@@ -282,6 +282,41 @@ namespace Cmdty.Core.Simulation.Test
             }
         }
 
+        [Test]
+        public void Simulate_MeanAndNonMeanRevertingFactors_MeanRevertingFactorsAverageWithin3StanDevsOfZero()
+        {
+            AssertWithin3StanDevsOfExpectedValueValue(
+                _meanAndNonMeanRevertingFactorsResults.MarkovFactorsForStepIndex(0, 1).Span, 0.0);
+            AssertWithin3StanDevsOfExpectedValueValue(
+                _meanAndNonMeanRevertingFactorsResults.MarkovFactorsForStepIndex(0, 2).Span, 0.0);
+
+            AssertWithin3StanDevsOfExpectedValueValue(
+                _meanAndNonMeanRevertingFactorsResults.MarkovFactorsForStepIndex(1, 1).Span, 0.0);
+            AssertWithin3StanDevsOfExpectedValueValue(
+                _meanAndNonMeanRevertingFactorsResults.MarkovFactorsForStepIndex(1, 2).Span, 0.0);
+
+            AssertWithin3StanDevsOfExpectedValueValue(
+                _meanAndNonMeanRevertingFactorsResults.MarkovFactorsForPeriod(new Day(2021, 07, 30), 1).Span, 0.0);
+            AssertWithin3StanDevsOfExpectedValueValue(
+                _meanAndNonMeanRevertingFactorsResults.MarkovFactorsForPeriod(new Day(2021, 07, 30), 2).Span, 0.0);
+        }
+
+        private static void AssertWithin3StanDevsOfExpectedValueValue(ReadOnlySpan<double> span, double expectedValue)
+        {
+            (double mean, double stanDev) = SampleStandardDeviationAndMean(span);
+            double standardError = stanDev / Math.Sqrt(span.Length);
+            double error = mean - expectedValue;
+            double numStanDevsError = error / standardError;
+            Assert.LessOrEqual(numStanDevsError, 3.0);
+#if PRINT_TEST_SIM_INFO
+                Console.WriteLine("mean: " + mean);
+                Console.WriteLine("error: " + error);
+                Console.WriteLine("standard error: " + standardError);
+                Console.WriteLine("num stan devs: " + error / standardError);
+                Console.WriteLine();
+#endif
+        }
+
         private static void AssertAverageSimSpotPricesWithin3StanDevsOfForwardPrice<T>(MultiFactorSpotSimResults<T> simResults, Dictionary<T, double> forwardCurve)
             where T : ITimePeriod<T>
         {
