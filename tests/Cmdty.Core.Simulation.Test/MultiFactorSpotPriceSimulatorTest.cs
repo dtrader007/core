@@ -55,6 +55,7 @@ namespace Cmdty.Core.Simulation.Test
         //  - Properties of factors:
         //      - Mean with 3 sds of 0 (only if mean reversion is greater than 0?)
         //      - Correlation of 1 day change equals in put correlation
+        //      - Auto-correlation is as expected
 
         private readonly Dictionary<Day, double> _dailyForwardCurve;
         private readonly DateTime _currentDate;
@@ -240,6 +241,20 @@ namespace Cmdty.Core.Simulation.Test
         }
 
         [Test]
+        [Ignore("Redo this test either: normalising the spot prices around their means or just doing this test on the factors.")]
+        public void Simulate_SingleNonMeanRevertingFactor_NonOverlappingIncrementReturnsZeroCorrelation()
+        {
+            ReadOnlySpan<double> step1SpotPriceSims = _singleNonMeanRevertingFactorResults.SpotPricesForStepIndex(0).Span;
+            ReadOnlySpan<double> step2SpotPriceSims = _singleNonMeanRevertingFactorResults.SpotPricesForStepIndex(1).Span;
+            ReadOnlySpan<double> step3SpotPriceSims = _singleNonMeanRevertingFactorResults.SpotPricesForStepIndex(2).Span;
+
+            double correlation = LogReturnsCorrelation(step1SpotPriceSims, step2SpotPriceSims, 
+                step2SpotPriceSims, step3SpotPriceSims);
+
+            Console.WriteLine(correlation);
+        }
+
+        [Test]
         public void Simulate_MeanAndNonMeanRevertingFactors_Within3StanDevsOfForwardPrice()
         {
             AssertAverageSimSpotPricesWithin3StanDevsOfForwardPrice(_meanAndNonMeanRevertingFactorsResults, _dailyForwardCurve);
@@ -323,10 +338,32 @@ namespace Cmdty.Core.Simulation.Test
         {
             var logVector = Vector<double>.Build.DenseOfArray(span.ToArray());
             logVector.PointwiseLog(logVector);
-
             return logVector.StandardDeviation();
         }
 
+        private static double LogReturnsCorrelation(ReadOnlySpan<double> priceSims1Start, ReadOnlySpan<double> priceSims1End,
+                        ReadOnlySpan<double> priceSims2Start, ReadOnlySpan<double> priceSims2End)
+        {
+            Vector<double> logChanges1 = LogChange(priceSims1Start, priceSims1End);
+            Vector<double> logChanges2 = LogChange(priceSims2Start, priceSims2End);
+
+            double correlation = Correlation.Pearson(logChanges1, logChanges2);
+            return correlation;
+        }
+
+        private static Vector<double> LogChange(ReadOnlySpan<double> priceSimsStart, ReadOnlySpan<double> priceSimsEnd)
+        {
+            Vector<double> startVector = ToVector(priceSimsStart);
+            Vector<double> endVector = ToVector(priceSimsEnd);
+            Vector<double> returns = endVector.PointwiseDivide(startVector);
+            returns.PointwiseLog(returns);
+            return returns;
+        }
+
+        private static Vector<double> ToVector(ReadOnlySpan<double> span)
+        {
+            return Vector<double>.Build.DenseOfArray(span.ToArray());
+        }
 
     }
 }
