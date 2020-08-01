@@ -41,19 +41,15 @@ namespace Cmdty.Core.Simulation.Test
 
         // Tests to do:
         // Input parameters:
-        //  - Zero vol - simulation equals curve
-        //  - Single non-mean reverting factor
-        //  - Two non-mean reverting factors
         //  - Two factors with -1 correlation
         //  - One more factors with high mean reversion:
-        //      - Standard deviation of increments far in future go to zero
+        //      - Standard deviation of increments flattens to constant
         // Outputs to test:
         //  - Expectation equals curve
         //  - Variance is expected
         //  - Characteristic function
         //  - Correlation of increments
         //  - Properties of factors:
-        //      - Mean with 3 sds of 0 (only if mean reversion is greater than 0?)
         //      - Correlation of 1 day change equals in put correlation
         //      - Auto-correlation is as expected
 
@@ -327,20 +323,7 @@ namespace Cmdty.Core.Simulation.Test
                 double forwardPrice = forwardCurve[simulatedPeriods[periodIndex]];
                 ReadOnlyMemory<double> simulatedSpotPrices = simResults.SpotPricesForStepIndex(periodIndex);
 
-                (double averageSimSpotPrice, double sampleStanDev) = SampleStandardDeviationAndMean(simulatedSpotPrices.Span);
-                double standardError = sampleStanDev / Math.Sqrt(simResults.NumSims);
-                double error = averageSimSpotPrice - forwardPrice;
-                double numStanDevsError = error / standardError;
-                Assert.LessOrEqual(numStanDevsError, 3.0);
-
-#if PRINT_TEST_SIM_INFO
-                Console.WriteLine("forward price: " + forwardPrice);
-                Console.WriteLine("average sim price: " + averageSimSpotPrice);
-                Console.WriteLine("error: " + error);
-                Console.WriteLine("standard error: " + standardError);
-                Console.WriteLine("num stan devs: " + error / standardError);
-                Console.WriteLine();
-#endif
+                AssertWithin3StanDevsOfExpectedValueValue(simulatedSpotPrices.Span, forwardPrice);
             }
         }
 
