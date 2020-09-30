@@ -27,6 +27,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cmdty.TimePeriodValueTypes;
+using Cmdty.TimeSeries;
 using JetBrains.Annotations;
 using MathNet.Numerics.LinearAlgebra;
 
@@ -43,7 +44,14 @@ namespace Cmdty.Core.Simulation.MultiFactor
         private readonly Matrix<double>[] _factorCovarianceSquareRoots;
         private readonly IReadOnlyList<T> _simulatedPeriods;
 
-        // TODO add constructor which accepts TimeSeries<T, double> as type of forwardCurve
+        public MultiFactorSpotPriceSimulator([NotNull] MultiFactorParameters<T> modelParameters,
+            DateTime currentDateTime,
+            [NotNull] TimeSeries<T, double> forwardCurve, [NotNull] IEnumerable<T> simulatedPeriods,
+            Func<DateTime, DateTime, double> timeFunc,
+            [NotNull] INormalGenerator normalGenerator)
+            :this(modelParameters, currentDateTime, CurveToDict(forwardCurve), simulatedPeriods, timeFunc, normalGenerator)
+        {
+        }
 
         public MultiFactorSpotPriceSimulator([NotNull] MultiFactorParameters<T> modelParameters, DateTime currentDateTime,
             [NotNull] Dictionary<T, double> forwardCurve, [NotNull] IEnumerable<T> simulatedPeriods, 
@@ -111,6 +119,17 @@ namespace Cmdty.Core.Simulation.MultiFactor
                 timeToMaturityPrevious = timeToMaturity;
             }
 
+        }
+
+        private static Dictionary<T, double> CurveToDict([NotNull] TimeSeries<T, double> forwardCurve)
+        {
+            if (forwardCurve == null) throw new ArgumentNullException(nameof(forwardCurve));
+            var forwardCurveDict = new Dictionary<T, double>(); // TODO figure out why Linq isn't working on TimeSeries 
+            foreach (TimeSeriesPoint<T, double> timeSeriesPoint in forwardCurve)
+            {
+                forwardCurveDict[timeSeriesPoint.Index] = timeSeriesPoint.Data;
+            }
+            return forwardCurveDict;
         }
 
         private static double CalcDriftAdjustment(MultiFactorParameters<T> modelParameters, double timeToMaturity, T period)
