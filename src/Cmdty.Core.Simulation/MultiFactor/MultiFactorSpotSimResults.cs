@@ -31,8 +31,7 @@ using JetBrains.Annotations;
 
 namespace Cmdty.Core.Simulation.MultiFactor
 {
-    public sealed class MultiFactorSpotSimResults<T>
-        where T : ITimePeriod<T>
+    public sealed class MultiFactorSpotSimResults<T> : ISpotSimResults<T> where T : ITimePeriod<T>
     {
         private readonly Dictionary<T, int> _periodIndices;
         public double[] SpotPrices { get; }
