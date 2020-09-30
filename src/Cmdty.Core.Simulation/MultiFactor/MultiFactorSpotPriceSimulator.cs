@@ -44,17 +44,9 @@ namespace Cmdty.Core.Simulation.MultiFactor
         private readonly Matrix<double>[] _factorCovarianceSquareRoots;
         private readonly IReadOnlyList<T> _simulatedPeriods;
 
-        public MultiFactorSpotPriceSimulator([NotNull] MultiFactorParameters<T> modelParameters,
-            DateTime currentDateTime,
-            [NotNull] TimeSeries<T, double> forwardCurve, [NotNull] IEnumerable<T> simulatedPeriods,
-            Func<DateTime, DateTime, double> timeFunc,
-            [NotNull] INormalGenerator normalGenerator)
-            :this(modelParameters, currentDateTime, CurveToDict(forwardCurve), simulatedPeriods, timeFunc, normalGenerator)
-        {
-        }
 
         public MultiFactorSpotPriceSimulator([NotNull] MultiFactorParameters<T> modelParameters, DateTime currentDateTime,
-            [NotNull] Dictionary<T, double> forwardCurve, [NotNull] IEnumerable<T> simulatedPeriods, 
+            [NotNull] IReadOnlyDictionary<T, double> forwardCurve, [NotNull] IEnumerable<T> simulatedPeriods, 
             Func<DateTime, DateTime, double> timeFunc, [NotNull] INormalGenerator normalGenerator) // TODO pass in random number generator factory
         {
             if (modelParameters == null) throw new ArgumentNullException(nameof(modelParameters));
@@ -119,17 +111,6 @@ namespace Cmdty.Core.Simulation.MultiFactor
                 timeToMaturityPrevious = timeToMaturity;
             }
 
-        }
-
-        private static Dictionary<T, double> CurveToDict([NotNull] TimeSeries<T, double> forwardCurve)
-        {
-            if (forwardCurve == null) throw new ArgumentNullException(nameof(forwardCurve));
-            var forwardCurveDict = new Dictionary<T, double>(); // TODO figure out why Linq isn't working on TimeSeries 
-            foreach (TimeSeriesPoint<T, double> timeSeriesPoint in forwardCurve)
-            {
-                forwardCurveDict[timeSeriesPoint.Index] = timeSeriesPoint.Data;
-            }
-            return forwardCurveDict;
         }
 
         private static double CalcDriftAdjustment(MultiFactorParameters<T> modelParameters, double timeToMaturity, T period)
