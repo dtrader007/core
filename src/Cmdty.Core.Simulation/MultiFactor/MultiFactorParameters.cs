@@ -36,7 +36,7 @@ namespace Cmdty.Core.Simulation.MultiFactor
         public double[,] FactorCorrelations { get; } // TODO make immutable
         public IReadOnlyList<Factor<T>> Factors { get; }
 
-        public MultiFactorParameters(IEnumerable<Factor<T>> factors, double[,] factorCorrelations)
+        public MultiFactorParameters(double[,] factorCorrelations, params Factor<T>[] factors)
         {
             FactorCorrelations = factorCorrelations;
             Factors = factors.ToArray();
@@ -52,5 +52,21 @@ namespace Cmdty.Core.Simulation.MultiFactor
 
         public int NumFactors => FactorCorrelations.GetLength(0);
 
+    }
+
+    public static class MultiFactorParameters
+    {
+        public static MultiFactorParameters<T> For1Factor<T>(double meanReversion, IReadOnlyDictionary<T, double> spotVolatility)
+            where T : ITimePeriod<T>
+        {
+            return new MultiFactorParameters<T>(new double[,] { { 1.0 } }, new Factor<T>(meanReversion, spotVolatility));
+        }
+
+        public static MultiFactorParameters<T> For2Factors<T>(double factorCorr, Factor<T> factor1, Factor<T> factor2)
+            where T : ITimePeriod<T>
+        {
+            var corrMatrix = new double[,] {{1.0, factorCorr}, {factorCorr, 1.0}};
+            return new MultiFactorParameters<T>(corrMatrix, factor1, factor2);
+        }
     }
 }

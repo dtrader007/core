@@ -36,17 +36,21 @@ namespace Cmdty.Core.Simulation.MultiFactor
         public double MeanReversion { get; }
         public IReadOnlyDictionary<T, double> Volatility { get; }
 
-        public Factor(double meanReversion, DoubleTimeSeries<T> volatility)
-        {
-            MeanReversion = meanReversion;
-            Volatility = volatility;
-        }
-
-        public Factor(double meanReversion, IDictionary<T, double> volatility)
+        public Factor(double meanReversion, IReadOnlyDictionary<T, double> volatility)
         {
             MeanReversion = meanReversion;
             Volatility = volatility.ToDictionary(pair => pair.Key, pair => pair.Value);
         }
+    }
 
+    public static class Factor
+    {
+        public static Factor<T> ForConstVol<T>(double meanReversion, T start, T end, double vol)
+            where T : ITimePeriod<T>
+        {
+            IEnumerable<double> constantVol = start.EnumerateTo(end).Select(period => vol);
+            var vols = new TimeSeries<T, double>(start, constantVol);
+            return new Factor<T>(meanReversion, vols);
+        }
     }
 }

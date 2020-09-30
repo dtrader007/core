@@ -86,32 +86,31 @@ namespace Cmdty.Core.Simulation.Test
         {
             int numSims = 100000;
             
-            _meanAndNonMeanRevertingFactorsParams = new MultiFactorParameters<Day>(new[]
-            {
-                new Factor<Day>(0.0, new Dictionary<Day, double>
-                {
-                    {new Day(2020, 08, 01), 0.35},
-                    {new Day(2021, 01, 15), 0.29},
-                    {new Day(2021, 07, 30), 0.32}
-                }),
-                new Factor<Day>(2.5, new Dictionary<Day, double>
-                {
-                    {new Day(2020, 08, 01), 0.15},
-                    {new Day(2021, 01, 15), 0.18},
-                    {new Day(2021, 07, 30), 0.21}
-                }),
-                new Factor<Day>(16.2, new Dictionary<Day, double>
-                {
-                    {new Day(2020, 08, 01), 0.95},
-                    {new Day(2021, 01, 15), 0.92},
-                    {new Day(2021, 07, 30), 0.89}
-                })
-            }, new[,]
+            _meanAndNonMeanRevertingFactorsParams = new MultiFactorParameters<Day>(new[,]
             {
                 {1.0, 0.6, 0.3},
                 {0.6, 1.0, 0.4},
                 {0.3, 0.4, 1.0}
-            });
+            }, 
+            new Factor<Day>(0.0, new Dictionary<Day, double>
+            {
+                {new Day(2020, 08, 01), 0.35},
+                {new Day(2021, 01, 15), 0.29},
+                {new Day(2021, 07, 30), 0.32}
+            }),
+            new Factor<Day>(2.5, new Dictionary<Day, double>
+            {
+                {new Day(2020, 08, 01), 0.15},
+                {new Day(2021, 01, 15), 0.18},
+                {new Day(2021, 07, 30), 0.21}
+            }),
+            new Factor<Day>(16.2, new Dictionary<Day, double>
+            {
+                {new Day(2020, 08, 01), 0.95},
+                {new Day(2021, 01, 15), 0.92},
+                {new Day(2021, 07, 30), 0.89}
+            })
+            );
 
             Day[] simulatedPeriods = _dailyForwardCurve.Keys.OrderBy(day => day).ToArray();
             var normalSimulator = new MersenneTwisterGenerator(_seed);
@@ -126,18 +125,14 @@ namespace Cmdty.Core.Simulation.Test
         private void SimulateForSingleNonMeanRevertingFactor()
         {
             int numSims = 1000000;
-            _singleNonMeanRevertingFactorParams = new MultiFactorParameters<Day>(new[]
+            double meanReversion = 0.0;
+            var spotVols = new Dictionary<Day, double>
             {
-                new Factor<Day>(0.0, new Dictionary<Day, double>
-                {
-                    {new Day(2020, 08, 01), 0.45},
-                    {new Day(2021, 01, 15), 0.42},
-                    {new Day(2021, 07, 30), 0.33}
-                })
-            }, new [,]
-                            {
-                                {1.0},
-                            });
+                {new Day(2020, 08, 01), 0.45},
+                {new Day(2021, 01, 15), 0.42},
+                {new Day(2021, 07, 30), 0.33}
+            };
+            _singleNonMeanRevertingFactorParams = MultiFactorParameters.For1Factor(meanReversion, spotVols);
 
             Day[] simulatedPeriods = _dailyForwardCurve.Keys.OrderBy(day => day).ToArray();
             var normalSimulator = new MersenneTwisterGenerator(_seed);
@@ -152,25 +147,21 @@ namespace Cmdty.Core.Simulation.Test
         private void SimulateForTwoNonMeanRevertingFactors()
         {
             int numSims = 100000;
-            _twoNonMeanRevertingFactorsParams = new MultiFactorParameters<Day>(new[]
-            {
+            double factorCorr = 0.74;
+            _twoNonMeanRevertingFactorsParams = MultiFactorParameters.For2Factors(factorCorr,
                 new Factor<Day>(0.0, new Dictionary<Day, double>
-                    {
-                        {new Day(2020, 08, 01), 0.15},
-                        {new Day(2021, 01, 15), 0.12},
-                        {new Day(2021, 07, 30), 0.13}
-                    }),
+                {
+                    {new Day(2020, 08, 01), 0.15},
+                    {new Day(2021, 01, 15), 0.12},
+                    {new Day(2021, 07, 30), 0.13}
+                }),
                 new Factor<Day>(0.0, new Dictionary<Day, double>
-                    {
-                        {new Day(2020, 08, 01), 0.11},
-                        {new Day(2021, 01, 15), 0.19},
-                        {new Day(2021, 07, 30), 0.15}
-                    })
-            }, new [,]
-            {
-                {1.0, 0.74},
-                {0.74, 1.0},
-            });
+                {
+                    {new Day(2020, 08, 01), 0.11},
+                    {new Day(2021, 01, 15), 0.19},
+                    {new Day(2021, 07, 30), 0.15}
+                })
+            );
 
             Day[] simulatedPeriods = _dailyForwardCurve.Keys.OrderBy(day => day).ToArray();
             var normalSimulator = new MersenneTwisterGenerator(_seed);
@@ -179,7 +170,6 @@ namespace Cmdty.Core.Simulation.Test
                 simulatedPeriods, TimeFunctions.Act365, normalSimulator);
 
             _twoNonMeanRevertingFactorsResults = simulator.Simulate(numSims);
-
         }
 
         private MultiFactorSpotSimResults<Day> SimulateForZeroVolatility()
@@ -191,17 +181,16 @@ namespace Cmdty.Core.Simulation.Test
                 {new Day(2021, 01, 15), 0.0},
                 {new Day(2021, 07, 30), 0.0}
             };
-            var multiFactorParameters = new MultiFactorParameters<Day>(new []
+            var multiFactorParameters = new MultiFactorParameters<Day>(new [,]
             {
+                {1.0, 0.6, 0.3},
+                {0.6, 1.0, 0.4},
+                {0.3, 0.4, 1.0}
+            },
                 new Factor<Day>(0.0, zeroFactorVols), 
                 new Factor<Day>(2.5, zeroFactorVols), 
                 new Factor<Day>(16.2, zeroFactorVols) 
-            }, new [,]
-                            {
-                                {1.0, 0.6, 0.3},
-                                {0.6, 1.0, 0.4},
-                                {0.3, 0.4, 1.0}
-                            });
+            );
 
             Day[] simulatedPeriods = _dailyForwardCurve.Keys.OrderBy(day => day).ToArray();
             var normalSimulator = new MersenneTwisterGenerator(_seed);
