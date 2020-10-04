@@ -201,20 +201,20 @@ namespace Cmdty.Core.Simulation.MultiFactor
                 int standardNormalStartIndex = 0;
                 for (int stepIndex = 0; stepIndex < numSteps; stepIndex++)
                 {
-                    CorrelateThisTimeStepRandoms(independentStandardNormals, standardNormalStartIndex, _factorCovarianceSquareRoots[stepIndex], factorStochasticTerm);
+                    var iidSpan = independentStandardNormals.AsSpan(standardNormalStartIndex);
+                    CorrelateThisTimeStepRandoms(iidSpan, _factorCovarianceSquareRoots[stepIndex], factorStochasticTerm);
 
                     double sumFactorTimesVol = 0.0;
                     for (int factorIndex = 0; factorIndex < thisStepFactors.Length; factorIndex++)
                     {
                         double factorValue = thisStepFactors[factorIndex] * _reversionMultipliers[stepIndex, factorIndex] + factorStochasticTerm[factorIndex];
                         thisStepFactors[factorIndex] = factorValue;
-                        // TODO test this indexing is correct
                         // Put all simulations for same time step next to each other as this is how they will be access in LSMC
                         markovFactors[stepIndex * numFactors * numSims + factorIndex * numSims + simIndex] = factorValue;
                         sumFactorTimesVol += factorValue * _spotVols[stepIndex, factorIndex];
                     }
 
-                    // TODO IMPORTANT - Math.Exp is slow, so look into vectorizing with MKL or Math.NET (if offered)
+                    // TODO IMPORTANT - Math.Exp is slow, so look into vectorizing with MKL or Math.NET (if offered) or Agner Fog library
                     // Put all simulations for same time step next to each other as this is how they will be access in LSMC
                     spotPrices[stepIndex * numSims + simIndex] = _forwardPrices[stepIndex] * Math.Exp(_driftAdjustments[stepIndex] + sumFactorTimesVol);
                     standardNormalStartIndex += numFactors;
@@ -224,8 +224,7 @@ namespace Cmdty.Core.Simulation.MultiFactor
             return new MultiFactorSpotSimResults<T>(spotPrices, markovFactors, _simulatedPeriods, numSteps, numSims, numFactors);
         }
 
-        // TODO use Span to take slice of iid vector
-        private void CorrelateThisTimeStepRandoms(double[] independentStandardNormals, int standardNormalStartIndex, 
+        private void CorrelateThisTimeStepRandoms(Span<double> independentStandardNormals, 
                         Matrix<double> factorCovarianceSquareRoot, double[] factorStochasticTerm)
         {
             // TODO either vectorize this for change factorCovarianceSquareRoot to an array
@@ -234,7 +233,7 @@ namespace Cmdty.Core.Simulation.MultiFactor
                 double sumProduct = 0.0;
                 for (int j = 0; j <= i; j++) // Cholesky is lower triangular
                 {
-                    sumProduct += factorCovarianceSquareRoot[i, j] * independentStandardNormals[standardNormalStartIndex + j];
+                    sumProduct += factorCovarianceSquareRoot[i, j] * independentStandardNormals[j];
                 }
                 factorStochasticTerm[i] = sumProduct;
             }
