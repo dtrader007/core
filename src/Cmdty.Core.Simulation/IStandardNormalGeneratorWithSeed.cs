@@ -1,6 +1,6 @@
 ﻿namespace Cmdty.Core.Simulation
 {
-    public interface INormalGeneratorWithSeed : INormalGenerator
+    public interface IStandardNormalGeneratorWithSeed : IStandardNormalGenerator
     {
         void ResetSeed(int seed);
         void ResetRandomSeed();

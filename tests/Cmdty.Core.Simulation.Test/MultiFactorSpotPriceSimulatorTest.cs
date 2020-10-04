@@ -56,12 +56,15 @@ namespace Cmdty.Core.Simulation.Test
         private readonly Dictionary<Day, double> _dailyForwardCurve;
         private readonly DateTime _currentDate;
         private readonly int _seed;
-        private MultiFactorSpotSimResults<Day> _singleNonMeanRevertingFactorResults;
+        private readonly MultiFactorSpotSimResults<Day> _singleNonMeanRevertingFactorResultsAntithetic;
+        private readonly MultiFactorSpotSimResults<Day> _singleNonMeanRevertingFactorResultsNotAntithetic;
         private MultiFactorParameters<Day> _singleNonMeanRevertingFactorParams;
-        private MultiFactorSpotSimResults<Day> _twoNonMeanRevertingFactorsResults;
+        private readonly MultiFactorSpotSimResults<Day> _twoNonMeanRevertingFactorsResultsAntithetic;
+        private readonly MultiFactorSpotSimResults<Day> _twoNonMeanRevertingFactorsResultsNotAntithetic;
         private MultiFactorParameters<Day> _twoNonMeanRevertingFactorsParams;
 
-        private MultiFactorSpotSimResults<Day> _meanAndNonMeanRevertingFactorsResults;
+        private readonly MultiFactorSpotSimResults<Day> _meanAndNonMeanRevertingFactorsResultsAntithetic;
+        private readonly MultiFactorSpotSimResults<Day> _meanAndNonMeanRevertingFactorsResultsNotAntithetic;
         private MultiFactorParameters<Day> _meanAndNonMeanRevertingFactorsParams;
 
 
@@ -77,12 +80,15 @@ namespace Cmdty.Core.Simulation.Test
                 {new Day(2021, 07, 30), 62.453 }
             };
 
-            SimulateForSingleNonMeanRevertingFactor();
-            SimulateForTwoNonMeanRevertingFactors();
-            SimulateForMeanAndNonMeanRevertingFactors();
+            _meanAndNonMeanRevertingFactorsResultsAntithetic = SimulateForMeanAndNonMeanRevertingFactors(true);
+            _meanAndNonMeanRevertingFactorsResultsNotAntithetic = SimulateForMeanAndNonMeanRevertingFactors(false);
+            _twoNonMeanRevertingFactorsResultsAntithetic = SimulateForTwoNonMeanRevertingFactors(true);
+            _twoNonMeanRevertingFactorsResultsNotAntithetic = SimulateForTwoNonMeanRevertingFactors(false);
+            _singleNonMeanRevertingFactorResultsAntithetic = SimulateForSingleNonMeanRevertingFactor(true);
+            _singleNonMeanRevertingFactorResultsNotAntithetic = SimulateForSingleNonMeanRevertingFactor(false);
         }
 
-        private void SimulateForMeanAndNonMeanRevertingFactors()
+        private MultiFactorSpotSimResults<Day> SimulateForMeanAndNonMeanRevertingFactors(bool antithetic)
         {
             int numSims = 100000;
             
@@ -113,16 +119,15 @@ namespace Cmdty.Core.Simulation.Test
             );
 
             Day[] simulatedPeriods = _dailyForwardCurve.Keys.OrderBy(day => day).ToArray();
-            var normalSimulator = new MersenneTwisterGenerator(_seed);
+            var normalSimulator = new MersenneTwisterGenerator(_seed, antithetic);
 
             var simulator = new MultiFactorSpotPriceSimulator<Day>(_meanAndNonMeanRevertingFactorsParams, _currentDate, _dailyForwardCurve,
                 simulatedPeriods, TimeFunctions.Act365, normalSimulator);
 
-            _meanAndNonMeanRevertingFactorsResults = simulator.Simulate(numSims);
-
+            return simulator.Simulate(numSims);
         }
 
-        private void SimulateForSingleNonMeanRevertingFactor()
+        private MultiFactorSpotSimResults<Day> SimulateForSingleNonMeanRevertingFactor(bool antithetic)
         {
             int numSims = 1000000;
             double meanReversion = 0.0;
@@ -135,16 +140,15 @@ namespace Cmdty.Core.Simulation.Test
             _singleNonMeanRevertingFactorParams = MultiFactorParameters.For1Factor(meanReversion, spotVols);
 
             Day[] simulatedPeriods = _dailyForwardCurve.Keys.OrderBy(day => day).ToArray();
-            var normalSimulator = new MersenneTwisterGenerator(_seed);
+            var normalSimulator = new MersenneTwisterGenerator(_seed, antithetic);
 
             var simulator = new MultiFactorSpotPriceSimulator<Day>(_singleNonMeanRevertingFactorParams, _currentDate, _dailyForwardCurve,
                 simulatedPeriods, TimeFunctions.Act365, normalSimulator);
 
-            _singleNonMeanRevertingFactorResults = simulator.Simulate(numSims);
-
+            return simulator.Simulate(numSims);
         }
 
-        private void SimulateForTwoNonMeanRevertingFactors()
+        private MultiFactorSpotSimResults<Day> SimulateForTwoNonMeanRevertingFactors(bool antithetic)
         {
             int numSims = 100000;
             double factorCorr = 0.74;
@@ -164,12 +168,12 @@ namespace Cmdty.Core.Simulation.Test
             );
 
             Day[] simulatedPeriods = _dailyForwardCurve.Keys.OrderBy(day => day).ToArray();
-            var normalSimulator = new MersenneTwisterGenerator(_seed);
+            var normalSimulator = new MersenneTwisterGenerator(_seed, antithetic);
  
             var simulator = new MultiFactorSpotPriceSimulator<Day>(_twoNonMeanRevertingFactorsParams, _currentDate, _dailyForwardCurve,
                 simulatedPeriods, TimeFunctions.Act365, normalSimulator);
 
-            _twoNonMeanRevertingFactorsResults = simulator.Simulate(numSims);
+            return simulator.Simulate(numSims);
         }
 
         private MultiFactorSpotSimResults<Day> SimulateForZeroVolatility()
@@ -193,13 +197,12 @@ namespace Cmdty.Core.Simulation.Test
             );
 
             Day[] simulatedPeriods = _dailyForwardCurve.Keys.OrderBy(day => day).ToArray();
-            var normalSimulator = new MersenneTwisterGenerator(_seed);
+            var normalSimulator = new MersenneTwisterGenerator(_seed, true);
 
             var simulator = new MultiFactorSpotPriceSimulator<Day>(multiFactorParameters, _currentDate, _dailyForwardCurve, 
                                 simulatedPeriods, TimeFunctions.Act365, normalSimulator);
 
             return simulator.Simulate(numSims);
-
         }
 
         [Test]
@@ -220,18 +223,24 @@ namespace Cmdty.Core.Simulation.Test
         }
 
         [Test]
-        public void Simulate_SingleNonMeanRevertingFactor_Within3StanDevsOfForwardPrice()
+        public void Simulate_SingleNonMeanRevertingFactorAntithetic_Within3StanDevsOfForwardPrice()
         {
-            AssertAverageSimSpotPricesWithin3StanDevsOfForwardPrice(_singleNonMeanRevertingFactorResults, _dailyForwardCurve);
+            AssertAverageSimSpotPricesWithin3StanDevsOfForwardPrice(_singleNonMeanRevertingFactorResultsAntithetic, _dailyForwardCurve);
+        }
+
+        [Test]
+        public void Simulate_SingleNonMeanRevertingFactorNotAntithetic_Within3StanDevsOfForwardPrice()
+        {
+            AssertAverageSimSpotPricesWithin3StanDevsOfForwardPrice(_singleNonMeanRevertingFactorResultsNotAntithetic, _dailyForwardCurve);
         }
 
         [Test]
         [Ignore("Redo this test either: normalising the spot prices around their means or just doing this test on the factors.")]
         public void Simulate_SingleNonMeanRevertingFactor_NonOverlappingIncrementReturnsZeroCorrelation()
         {
-            ReadOnlySpan<double> step1SpotPriceSims = _singleNonMeanRevertingFactorResults.SpotPricesForStepIndex(0).Span;
-            ReadOnlySpan<double> step2SpotPriceSims = _singleNonMeanRevertingFactorResults.SpotPricesForStepIndex(1).Span;
-            ReadOnlySpan<double> step3SpotPriceSims = _singleNonMeanRevertingFactorResults.SpotPricesForStepIndex(2).Span;
+            ReadOnlySpan<double> step1SpotPriceSims = _singleNonMeanRevertingFactorResultsAntithetic.SpotPricesForStepIndex(0).Span;
+            ReadOnlySpan<double> step2SpotPriceSims = _singleNonMeanRevertingFactorResultsAntithetic.SpotPricesForStepIndex(1).Span;
+            ReadOnlySpan<double> step3SpotPriceSims = _singleNonMeanRevertingFactorResultsAntithetic.SpotPricesForStepIndex(2).Span;
 
             double correlation = LogReturnsCorrelation(step1SpotPriceSims, step2SpotPriceSims, 
                 step2SpotPriceSims, step3SpotPriceSims);
@@ -240,24 +249,48 @@ namespace Cmdty.Core.Simulation.Test
         }
 
         [Test]
-        public void Simulate_MeanAndNonMeanRevertingFactors_Within3StanDevsOfForwardPrice()
+        public void Simulate_MeanAndNonMeanRevertingFactorsAntithetic_Within3StanDevsOfForwardPrice()
         {
-            AssertAverageSimSpotPricesWithin3StanDevsOfForwardPrice(_meanAndNonMeanRevertingFactorsResults, _dailyForwardCurve);
+            AssertAverageSimSpotPricesWithin3StanDevsOfForwardPrice(_meanAndNonMeanRevertingFactorsResultsAntithetic, _dailyForwardCurve);
         }
 
         [Test]
-        public void Simulate_TwoNonMeanRevertingFactors_Within3StanDevsOfForwardPrice()
+        public void Simulate_MeanAndNonMeanRevertingFactorsNOtAntithetic_Within3StanDevsOfForwardPrice()
         {
-            AssertAverageSimSpotPricesWithin3StanDevsOfForwardPrice(_twoNonMeanRevertingFactorsResults, _dailyForwardCurve);
+            AssertAverageSimSpotPricesWithin3StanDevsOfForwardPrice(_meanAndNonMeanRevertingFactorsResultsNotAntithetic, _dailyForwardCurve);
         }
 
         [Test]
-        public void Simulate_SingleNonMeanRevertingFactor_StandDevEqualsVolSquRootTimeToMaturity()
+        public void Simulate_TwoNonMeanRevertingFactorsAntithetic_Within3StanDevsOfForwardPrice()
         {
-            for (int i = 0; i < _singleNonMeanRevertingFactorResults.NumSteps; i++)
+            AssertAverageSimSpotPricesWithin3StanDevsOfForwardPrice(_twoNonMeanRevertingFactorsResultsAntithetic, _dailyForwardCurve);
+        }
+
+        [Test]
+        public void Simulate_TwoNonMeanRevertingFactorsNotAntithetic_Within3StanDevsOfForwardPrice()
+        {
+            AssertAverageSimSpotPricesWithin3StanDevsOfForwardPrice(_twoNonMeanRevertingFactorsResultsNotAntithetic, _dailyForwardCurve);
+        }
+
+        [Test]
+        public void Simulate_SingleNonMeanRevertingFactorAntithetic_StandDevEqualsVolSquRootTimeToMaturity()
+        {
+            AssertStandDevEqualsVolSquRootTimeToMaturity(_singleNonMeanRevertingFactorResultsAntithetic);
+        }
+
+        [Test]
+        public void Simulate_SingleNonMeanRevertingFactorNotAntithetic_StandDevEqualsVolSquRootTimeToMaturity()
+        {
+            AssertStandDevEqualsVolSquRootTimeToMaturity(_singleNonMeanRevertingFactorResultsNotAntithetic);
+        }
+
+        private void AssertStandDevEqualsVolSquRootTimeToMaturity(MultiFactorSpotSimResults<Day> simResults)
+        {
+            for (int i = 0; i < simResults.NumSteps; i++)
             {
-                ReadOnlyMemory<double> simulatedSpotPrices = _singleNonMeanRevertingFactorResults.SpotPricesForStepIndex(i);
-                Day period = _singleNonMeanRevertingFactorResults.SimulatedPeriods[i];
+                ReadOnlyMemory<double> simulatedSpotPrices =
+                    simResults.SpotPricesForStepIndex(i);
+                Day period = simResults.SimulatedPeriods[i];
                 double factorVolForPeriod = _singleNonMeanRevertingFactorParams.Factors.Single().Volatility[period];
                 double timeToMaturity = TimeFunctions.Act365(_currentDate, period.Start);
                 double expectedLogStanDev = factorVolForPeriod * Math.Sqrt(timeToMaturity);
@@ -268,22 +301,33 @@ namespace Cmdty.Core.Simulation.Test
         }
 
         [Test]
-        public void Simulate_MeanAndNonMeanRevertingFactors_MeanRevertingFactorsAverageWithin3StanDevsOfZero()
+        public void Simulate_MeanAndNonMeanRevertingFactorsAntithetic_MeanRevertingFactorsAverageWithin3StanDevsOfZero()
+        {
+            MeanRevertingFactorsAverageWithin3StanDevsOfZero(_meanAndNonMeanRevertingFactorsResultsAntithetic);
+        }
+
+        [Test]
+        public void Simulate_MeanAndNonMeanRevertingFactorsNotAntithetic_MeanRevertingFactorsAverageWithin3StanDevsOfZero()
+        {
+            MeanRevertingFactorsAverageWithin3StanDevsOfZero(_meanAndNonMeanRevertingFactorsResultsNotAntithetic);
+        }
+
+        private static void MeanRevertingFactorsAverageWithin3StanDevsOfZero(MultiFactorSpotSimResults<Day> simResults)
         {
             AssertWithin3StanDevsOfExpectedValueValue(
-                _meanAndNonMeanRevertingFactorsResults.MarkovFactorsForStepIndex(0, 1).Span, 0.0);
+                simResults.MarkovFactorsForStepIndex(0, 1).Span, 0.0);
             AssertWithin3StanDevsOfExpectedValueValue(
-                _meanAndNonMeanRevertingFactorsResults.MarkovFactorsForStepIndex(0, 2).Span, 0.0);
+                simResults.MarkovFactorsForStepIndex(0, 2).Span, 0.0);
 
             AssertWithin3StanDevsOfExpectedValueValue(
-                _meanAndNonMeanRevertingFactorsResults.MarkovFactorsForStepIndex(1, 1).Span, 0.0);
+                simResults.MarkovFactorsForStepIndex(1, 1).Span, 0.0);
             AssertWithin3StanDevsOfExpectedValueValue(
-                _meanAndNonMeanRevertingFactorsResults.MarkovFactorsForStepIndex(1, 2).Span, 0.0);
+                simResults.MarkovFactorsForStepIndex(1, 2).Span, 0.0);
 
             AssertWithin3StanDevsOfExpectedValueValue(
-                _meanAndNonMeanRevertingFactorsResults.MarkovFactorsForPeriod(new Day(2021, 07, 30), 1).Span, 0.0);
+                simResults.MarkovFactorsForPeriod(new Day(2021, 07, 30), 1).Span, 0.0);
             AssertWithin3StanDevsOfExpectedValueValue(
-                _meanAndNonMeanRevertingFactorsResults.MarkovFactorsForPeriod(new Day(2021, 07, 30), 2).Span, 0.0);
+                simResults.MarkovFactorsForPeriod(new Day(2021, 07, 30), 2).Span, 0.0);
         }
 
         private static void AssertWithin3StanDevsOfExpectedValueValue(ReadOnlySpan<double> span, double expectedValue)

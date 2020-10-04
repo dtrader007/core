@@ -35,7 +35,7 @@ namespace Cmdty.Core.Simulation.MultiFactor
     public sealed class MultiFactorSpotPriceSimulator<T>
         where T : ITimePeriod<T>
     {
-        private readonly INormalGenerator _normalGenerator;
+        private readonly IStandardNormalGenerator _standardNormalGenerator;
         private readonly double[] _forwardPrices;
         private readonly double[] _driftAdjustments;
         private readonly double[,] _reversionMultipliers;
@@ -46,12 +46,12 @@ namespace Cmdty.Core.Simulation.MultiFactor
 
         public MultiFactorSpotPriceSimulator([NotNull] MultiFactorParameters<T> modelParameters, DateTime currentDateTime,
             [NotNull] IReadOnlyDictionary<T, double> forwardCurve, [NotNull] IEnumerable<T> simulatedPeriods, 
-            Func<DateTime, DateTime, double> timeFunc, [NotNull] INormalGenerator normalGenerator) // TODO pass in random number generator factory
+            Func<DateTime, DateTime, double> timeFunc, [NotNull] IStandardNormalGenerator standardNormalGenerator) // TODO pass in random number generator factory
         {
             if (modelParameters == null) throw new ArgumentNullException(nameof(modelParameters));
             if (forwardCurve == null) throw new ArgumentNullException(nameof(forwardCurve));
             if (simulatedPeriods == null) throw new ArgumentNullException(nameof(simulatedPeriods));
-            _normalGenerator = normalGenerator ?? throw new ArgumentNullException(nameof(normalGenerator));
+            _standardNormalGenerator = standardNormalGenerator ?? throw new ArgumentNullException(nameof(standardNormalGenerator));
 
             T[] simulatedPeriodsArray = simulatedPeriods.ToArray();
 
@@ -62,8 +62,8 @@ namespace Cmdty.Core.Simulation.MultiFactor
                 throw new ArgumentException(nameof(simulatedPeriods) + " argument cannot be empty.", nameof(simulatedPeriods));
 
             int numRandomDimensions = numPeriods * numFactors;
-            if (!_normalGenerator.MatchesDimensions(numRandomDimensions))
-                throw new ArgumentException($"Injected normal random generator is not set up to generate with {numRandomDimensions} dimensions.", nameof(normalGenerator));
+            if (!_standardNormalGenerator.MatchesDimensions(numRandomDimensions))
+                throw new ArgumentException($"Injected normal random generator is not set up to generate with {numRandomDimensions} dimensions.", nameof(standardNormalGenerator));
 
             _forwardPrices = new double[numPeriods];
             _driftAdjustments = new double[numPeriods];
@@ -196,7 +196,7 @@ namespace Cmdty.Core.Simulation.MultiFactor
                 for (int i = 0; i < thisStepFactors.Length; i++)
                     thisStepFactors[i] = 0.0;
 
-                _normalGenerator.Generate(independentStandardNormals, 0.0, 1.0);
+                _standardNormalGenerator.Generate(independentStandardNormals);
 
                 int standardNormalStartIndex = 0;
                 for (int stepIndex = 0; stepIndex < numSteps; stepIndex++)
@@ -241,32 +241,32 @@ namespace Cmdty.Core.Simulation.MultiFactor
 
         public void ResetNormalGenerator()
         {
-            _normalGenerator.Reset();
+            _standardNormalGenerator.Reset();
         }
 
         public void ResetNormalGeneratorSeed(int seed)
         {
-            INormalGeneratorWithSeed normalGeneratorWithSeed = GetGeneratorWithSeed();
-            normalGeneratorWithSeed.ResetSeed(seed);
+            IStandardNormalGeneratorWithSeed standardNormalGeneratorWithSeed = GetGeneratorWithSeed();
+            standardNormalGeneratorWithSeed.ResetSeed(seed);
         }
 
         public void ResetNormalGeneratorRandomSeed()
         {
-            INormalGeneratorWithSeed normalGeneratorWithSeed = GetGeneratorWithSeed();
-            normalGeneratorWithSeed.ResetRandomSeed();
+            IStandardNormalGeneratorWithSeed standardNormalGeneratorWithSeed = GetGeneratorWithSeed();
+            standardNormalGeneratorWithSeed.ResetRandomSeed();
         }
 
-        private INormalGeneratorWithSeed GetGeneratorWithSeed()
+        private IStandardNormalGeneratorWithSeed GetGeneratorWithSeed()
         {
             // TODO test error message is ok
-            if (!(_normalGenerator is INormalGeneratorWithSeed normalGeneratorWithSeed))
-                throw new InvalidOperationException($"Type of {nameof(INormalGenerator)} injected into constructor, {_normalGenerator.GetType().Name}, does not implement {nameof(INormalGeneratorWithSeed)}.");
+            if (!(_standardNormalGenerator is IStandardNormalGeneratorWithSeed normalGeneratorWithSeed))
+                throw new InvalidOperationException($"Type of {nameof(IStandardNormalGenerator)} injected into constructor, {_standardNormalGenerator.GetType().Name}, does not implement {nameof(IStandardNormalGeneratorWithSeed)}.");
             return normalGeneratorWithSeed;
         }
 
         public bool NormalGeneratorTypeHasSeed()
         {
-            return _normalGenerator is INormalGeneratorWithSeed;
+            return _standardNormalGenerator is IStandardNormalGeneratorWithSeed;
         }
 
     }

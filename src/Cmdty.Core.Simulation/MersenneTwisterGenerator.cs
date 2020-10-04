@@ -23,44 +23,71 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 #endregion
 
+using System;
 using MathNet.Numerics.Random;
 using MathNet.Numerics.Distributions;
 
 namespace Cmdty.Core.Simulation
 {
-    public sealed class MersenneTwisterGenerator : INormalGeneratorWithSeed
+    public sealed class MersenneTwisterGenerator : IStandardNormalGeneratorWithSeed
     {
         // TODO make field RandomSource type and inject in MersenneTwister? Probably not worth if for now.
         private MersenneTwister _randomSource;
         private int _seed;
-        private bool? _threadSafe;
+        private readonly bool? _threadSafe;
+        private double[] _antitheticBuffer;
+        private bool _returnFromAntitheticBuffer;
+        public bool Antithetic { get; }
 
-        public MersenneTwisterGenerator(int seed, bool threadSafe)
+        public MersenneTwisterGenerator(int seed, bool threadSafe, bool antithetic)
         {
             _randomSource = new MersenneTwister(seed, threadSafe);
             _seed = seed;
             _threadSafe = threadSafe;
+            Antithetic = antithetic;
         }
 
-        public MersenneTwisterGenerator(bool threadSafe)
+        public MersenneTwisterGenerator(bool threadSafe, bool antithetic)
         {
             _randomSource = new MersenneTwister(threadSafe);
             _threadSafe = threadSafe;
+            Antithetic = antithetic;
         }
 
-        public MersenneTwisterGenerator(int seed)
+        public MersenneTwisterGenerator(int seed, bool antithetic)
         {
             _randomSource = new MersenneTwister(seed);
+            Antithetic = antithetic;
         }
 
-        public MersenneTwisterGenerator()
+        public MersenneTwisterGenerator(bool antithetic)
         {
             _randomSource = new MersenneTwister(RandomSeed.Robust());
+            Antithetic = antithetic;
         }
 
-        public void Generate(double[] randomNormals, double mean, double standardDeviation)
+        public void Generate(double[] randomNormals)
         {
-            Normal.Samples(_randomSource, randomNormals, mean, standardDeviation);
+            if (Antithetic && _returnFromAntitheticBuffer)
+            {
+                if (randomNormals.Length != _antitheticBuffer.Length)
+                    throw new InvalidOperationException($"Instance is constructed to generate antithetically, " +
+                                                        $"so generate must be called with randomNormals of the same size every time.");
+                Array.Copy(_antitheticBuffer, randomNormals, randomNormals.Length);
+                _returnFromAntitheticBuffer = !_returnFromAntitheticBuffer;
+            }
+            else
+            {
+                Normal.Samples(_randomSource, randomNormals, 0, 1);
+                if (Antithetic)
+                {
+                    if (_antitheticBuffer == null)
+                        _antitheticBuffer = new double[randomNormals.Length];
+                    for (int i = 0; i < randomNormals.Length; i++)
+                        _antitheticBuffer[i] = - randomNormals[i];
+                    _returnFromAntitheticBuffer = !_returnFromAntitheticBuffer;
+                }
+            }
         }
 
         // TODO Generate method which accepts Span<double> as parameter (requires update to Math.NET library)
