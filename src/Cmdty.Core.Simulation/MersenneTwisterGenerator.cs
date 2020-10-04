@@ -37,7 +37,7 @@ namespace Cmdty.Core.Simulation
         private readonly bool? _threadSafe;
         private double[] _antitheticBuffer;
         private bool _returnFromAntitheticBuffer;
-        public bool Antithetic { get; }
+        public bool Antithetic { get; } // TODO put antithetic functionality in decorator wrapper class
 
         public MersenneTwisterGenerator(int seed, bool threadSafe, bool antithetic)
         {
