@@ -41,7 +41,7 @@ namespace Cmdty.Core.Simulation.MultiFactor
         public int NumFactors { get; }
         public IReadOnlyList<T> SimulatedPeriods { get; }
 
-        internal MultiFactorSpotSimResults([NotNull] double[] spotPrices, [NotNull] double[] markovFactors,
+        public MultiFactorSpotSimResults([NotNull] double[] spotPrices, [NotNull] double[] markovFactors,
             [NotNull] IEnumerable<T> simulatedPeriods, int numSteps, int numSims, int numFactors)
         {
             if (simulatedPeriods == null) throw new ArgumentNullException(nameof(simulatedPeriods));
