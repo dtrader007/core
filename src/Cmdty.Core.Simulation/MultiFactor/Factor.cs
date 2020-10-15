@@ -23,6 +23,7 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 #endregion
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cmdty.TimePeriodValueTypes;
@@ -38,6 +39,8 @@ namespace Cmdty.Core.Simulation.MultiFactor
 
         public Factor(double meanReversion, IReadOnlyDictionary<T, double> volatility)
         {
+            if (meanReversion < 0)
+                throw new ArgumentException("Mean reversion must be non-negative.", nameof(meanReversion));
             MeanReversion = meanReversion;
             Volatility = volatility.ToDictionary(pair => pair.Key, pair => pair.Value);
         }
