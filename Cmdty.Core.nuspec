@@ -32,6 +32,9 @@
       <group targetFramework=".NETStandard2.0">
         <dependency id="System.Memory" version="4.5.4" exclude="Build,Analyzers" />
       </group>
+      <group targetFramework=".NETFramework4.5">
+        <dependency id="System.ValueTuple" version="4.5.0" exclude="Build,Analyzers" />
+      </group>
 		</dependencies>
 	</metadata>
 	<files>
@@ -39,9 +42,11 @@
 		<file src="src\Cmdty.Core.Trees\bin\$configuration$\net45\Cmdty.Core.Trees.pdb" target="lib\net45" />
 		<file src="src\Cmdty.Core.Simulation\bin\$configuration$\net45\Cmdty.Core.Simulation.dll" target="lib\net45" />
 		<file src="src\Cmdty.Core.Simulation\bin\$configuration$\net45\Cmdty.Core.Simulation.pdb" target="lib\net45" />
-		<file src="src\Cmdty.Core.Trees\bin\$configuration$\netstandard2.0\Cmdty.Core.Trees.dll" target="lib\netstandard2.0" />
+    <file src="src\Cmdty.Core.Common\bin\$configuration$\net45\Cmdty.Core.Common.dll" target="lib\net45" />
+    <file src="src\Cmdty.Core.Common\bin\$configuration$\net45\Cmdty.Core.Common.pdb" target="lib\net45" />		<file src="src\Cmdty.Core.Trees\bin\$configuration$\netstandard2.0\Cmdty.Core.Trees.dll" target="lib\netstandard2.0" />
 		<file src="src\Cmdty.Core.Trees\bin\$configuration$\netstandard2.0\Cmdty.Core.Trees.pdb" target="lib\netstandard2.0" />
 		<file src="src\Cmdty.Core.Simulation\bin\$configuration$\netstandard2.0\Cmdty.Core.Simulation.dll" target="lib\netstandard2.0" />
 		<file src="src\Cmdty.Core.Simulation\bin\$configuration$\netstandard2.0\Cmdty.Core.Simulation.pdb" target="lib\netstandard2.0" />
-	</files>
+    <file src="src\Cmdty.Core.Common\bin\$configuration$\netstandard2.0\Cmdty.Core.Common.dll" target="lib\netstandard2.0" />
+    <file src="src\Cmdty.Core.Common\bin\$configuration$\netstandard2.0\Cmdty.Core.Common.pdb" target="lib\netstandard2.0" />	</files>
 </package>
