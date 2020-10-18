@@ -27,7 +27,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.InteropServices;
 
 namespace Cmdty.Core.Common
 {
@@ -35,29 +34,29 @@ namespace Cmdty.Core.Common
     public sealed class Panel<TIndex, TData>
     {
         public TData[] RawData { get; }
-        private readonly Dictionary<TIndex, int> _indices;
+        private readonly Dictionary<TIndex, int> _rowKeys;
 
-        internal Panel(TData[] rawData, IEnumerable<TIndex> indices, int numCols)
+        internal Panel(TData[] rawData, IEnumerable<TIndex> rowKeys, int numCols)
         {
-            if (indices == null) throw new ArgumentNullException(nameof(indices));
+            if (rowKeys == null) throw new ArgumentNullException(nameof(rowKeys));
             if (numCols < 0)
                 throw new ArgumentException("Number of columns must be non-negative.", nameof(numCols));
             NumCols = numCols;
-            _indices = indices.Select((index, i) => (index, i)).ToDictionary(pair => pair.index, pair => pair.i * numCols);
-            NumRows = _indices.Count;
+            _rowKeys = rowKeys.Select((index, i) => (index, i)).ToDictionary(pair => pair.index, pair => pair.i * numCols);
+            NumRows = _rowKeys.Count;
             if (rawData.Length < NumRows * NumCols) // Raw Data can be larger than necessary to facilitate reusing memory, e.g. by using ArrayPool
                 throw new ArgumentException("Raw Data array is not big enough.", nameof(rawData));
             RawData = rawData;
         }
 
-        public Panel(IEnumerable<TIndex> rowIndices, int numCols)
+        public Panel(IEnumerable<TIndex> rowKeys, int numCols)
         {
-            if (rowIndices == null) throw new ArgumentNullException(nameof(rowIndices));
+            if (rowKeys == null) throw new ArgumentNullException(nameof(rowKeys));
             if (numCols < 0)
                 throw new ArgumentException("Number of columns must be non-negative.", nameof(numCols));
             NumCols = numCols;
-            _indices = rowIndices.Select((index, i) => (index, i)).ToDictionary(pair => pair.index, pair => pair.i * numCols);
-            NumRows = _indices.Count;
+            _rowKeys = rowKeys.Select((index, i) => (index, i)).ToDictionary(pair => pair.index, pair => pair.i * numCols);
+            NumRows = _rowKeys.Count;
             RawData = new TData[NumRows * NumCols];
         }
 
@@ -65,9 +64,9 @@ namespace Cmdty.Core.Common
 
         public int NumCols { get; }
 
-        public IEnumerable<TIndex> RowIndices => _indices.Keys;
+        public IEnumerable<TIndex> RowKeys => _rowKeys.Keys;
 
-        public bool IsEmpty => RawData.Length == 0;
+        public bool IsEmpty => NumRows == 0;
 
         public Span<TData> this[int rowIndex] 
         {
@@ -79,7 +78,7 @@ namespace Cmdty.Core.Common
             }
         }
         
-        public Span<TData> this[TIndex rowIndex] => new Span<TData>(RawData, _indices[rowIndex], NumCols);
+        public Span<TData> this[TIndex rowIndex] => new Span<TData>(RawData, _rowKeys[rowIndex], NumCols);
 
         public Memory<TData> GetRowMemory(int rowIndex)
         {
@@ -89,7 +88,7 @@ namespace Cmdty.Core.Common
         }
 
         public Memory<TData> GetRowMemory(TIndex rowIndex) =>
-            new Memory<TData>(RawData, _indices[rowIndex], NumCols);
+            new Memory<TData>(RawData, _rowKeys[rowIndex], NumCols);
 
         // Note that precondition checks aren't put in shared method as this can't be inlined due to throwing exception
         public TData this[int rowIndex, int colIndex]
@@ -118,13 +117,13 @@ namespace Cmdty.Core.Common
             {
                 if (colIndex >= NumCols || colIndex < 0)
                     throw new ArgumentOutOfRangeException(nameof(colIndex));
-                return RawData[_indices[rowIndex] + colIndex];
+                return RawData[_rowKeys[rowIndex] + colIndex];
             }
             set
             {
                 if (colIndex >= NumCols || colIndex < 0)
                     throw new ArgumentOutOfRangeException(nameof(colIndex));
-                RawData[_indices[rowIndex] + colIndex] = value;
+                RawData[_rowKeys[rowIndex] + colIndex] = value;
             }
         }
         
@@ -153,10 +152,8 @@ namespace Cmdty.Core.Common
                     rawData[idx++] = data[i, j];
                 }
             }
-
             return UseRawDataArray(rawData, rowIndices, numCols);
         }
 
     }
-
 }

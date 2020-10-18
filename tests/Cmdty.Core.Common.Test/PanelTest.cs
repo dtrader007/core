@@ -32,6 +32,28 @@ namespace Cmdty.Core.Common.Test
     [TestFixture]
     public sealed class PanelTest
     {
+
+        [Test]
+        public void Constructor_RepeatedRowKey_Throws()
+        {
+            var rowIndices = new[] { "row-one", "row-one", "row-three" };
+            // ReSharper disable once ObjectCreationAsStatement
+            Assert.Throws<ArgumentException>(() => new Panel<string, int>(rowIndices, 2));
+        }
+
+        private static Panel<string, int> CreateTestPanel()
+        {
+            var rowIndices = new[] { "row-one", "row-two", "row-three" };
+            var panel = new Panel<string, int>(rowIndices, 2);
+            panel[0][0] = 1;
+            panel[0][1] = 2;
+            panel[1][0] = 3;
+            panel[1][1] = 4;
+            panel[2][0] = 5;
+            panel[2][1] = 6;
+            return panel;
+        }
+
         [Test]
         public void CreateEmptyIntParameter_CreatesEmptyPanelWithNumColsEqualToIntParameter()
         {
@@ -41,6 +63,7 @@ namespace Cmdty.Core.Common.Test
             Assert.IsTrue(panel.IsEmpty);
             Assert.AreEqual(numCols, panel.NumCols);
             Assert.AreEqual(0, panel.NumRows);
+            Assert.AreEqual(0, panel.RawData.Length);
         }
 
         [Test]
@@ -51,21 +74,7 @@ namespace Cmdty.Core.Common.Test
             Assert.IsTrue(panel.IsEmpty);
             Assert.AreEqual(0, panel.NumCols);
             Assert.AreEqual(0, panel.NumRows);
-        }
-
-        private static Panel<string, int> CreateTestPanel()
-        {
-            var rowIndices = new[] {"row-one", "row-two", "row-three"};
-            var panel = new Panel<string, int>(rowIndices, 2);
-
-            panel[0][0] = 1;
-            panel[0][1] = 2;
-            panel[1][0] = 3;
-            panel[1][1] = 4;
-            panel[2][0] = 5;
-            panel[2][1] = 6;
-
-            return panel;
+            Assert.AreEqual(0, panel.RawData.Length);
         }
 
         [Test]
@@ -109,7 +118,7 @@ namespace Cmdty.Core.Common.Test
         }
 
         [Test]
-        public void IndexerOneRowIndexTypeParameter_IndexOutOfRange_ThrowsKeyNotFoundExceptionException()
+        public void IndexerOneRowIndexTypeParameter_IndexOutOfRange_ThrowsKeyNotFoundException()
         {
             Panel<string, int> panel = CreateTestPanel();
             try
@@ -245,7 +254,7 @@ namespace Cmdty.Core.Common.Test
             Assert.AreEqual(numCols, panel.NumCols);
             Assert.AreEqual(rowIndices.Length, panel.NumRows);
             Assert.AreEqual(rawData, panel.RawData);
-            CollectionAssert.AreEqual(rowIndices, panel.RowIndices);
+            CollectionAssert.AreEqual(rowIndices, panel.RowKeys);
         }
 
         [Test]
@@ -260,7 +269,7 @@ namespace Cmdty.Core.Common.Test
             };
             Panel<string, int> panel = Panel.From2DArray(data, rowIndices);
 
-            CollectionAssert.AreEqual(rowIndices, panel.RowIndices);
+            CollectionAssert.AreEqual(rowIndices, panel.RowKeys);
             CollectionAssert.AreEqual(new []{1, 2}, panel[0].ToArray());
             CollectionAssert.AreEqual(new []{3, 4}, panel[1].ToArray());
             CollectionAssert.AreEqual(new []{5, 6}, panel[2].ToArray());
