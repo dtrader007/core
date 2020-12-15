@@ -1,4 +1,5 @@
 \documentclass{article}
+\usepackage{graphicx}
 \usepackage{amsmath}
 \usepackage{mathrsfs}
 \usepackage{amssymb} % for "\mathbb" macro
@@ -82,8 +83,18 @@ The KyStore product is clearly a popular one and The Author believes that this i
 to the parsimony of the underlying price process model.
 
 \bigskip
-The big downside of this model is that the forward volatility structure implied is completely unrealistic.
-It is well known that the 
+The big downside of this model is that the forward volatility seasonality structure is unrealistic.
+It is well known that, adjusting for time-to-maturity effects, the volatility of winter periods 
+will generally be higher than those in summer. Figure \ref{fig:seasonal_vol} plots the forward
+volatility implied by the model, with mean reversion set to zero in order to remove any t
+time-to-maturity effect. This chart shows that the model implies two volatility peaks a
+year, once in February, as expected, but the other around August.
+
+\begin{figure}
+    \includegraphics{vol_seasonality.png}
+    \caption{Forward Volatility By Delivery Date}
+    \label{fig:seasonal_vol}
+\end{figure}
 
 
 \bibliographystyle{plainnat}
