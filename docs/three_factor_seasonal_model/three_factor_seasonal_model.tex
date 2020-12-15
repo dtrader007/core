@@ -1,0 +1,92 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{mathrsfs}
+\usepackage{amssymb} % for "\mathbb" macro
+\usepackage[round]{natbib}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage[toc,page]{appendix}
+
+\title{Three Factor Seasonal Commodity Price Process}
+\author{Jake C. Fowler}
+\date{December 2020}
+
+\begin{document}
+\newcommand{\+}[1]{\ensuremath{\mathbf{#1}}}
+
+\maketitle
+
+WARNING: THIS DOCUMENT IS CURRENTLY WORK IN PROGRESS
+
+\tableofcontents
+
+\newpage
+
+\section{Introduction}
+This paper presents a specific set for parameters for the multi-factor model presented in \cite{Fowler}
+such that the model should have similar statistical properties to the three-factor spot price
+model presented in \cite{Boogert} the model used in the commercial KyStore gas storage valuation model. 
+
+
+\section{Forward Price SDE}
+The starting point is the SDE (stochastic differential equation) for the forward
+price process:
+
+\begin{align}
+    \label{eq:forward_sde}
+    \frac{dF(t, T)^l}{F(t, T)^l}=\sum_{i=1}^{n^l} \sigma_i^l(T)e^{-\alpha_i^l(T-t)}dz_i^l(t) \\
+    \nonumber
+    \alpha_i^l \in \mathbb{R}_{\ge 0} \\
+    \nonumber
+    t \in \mathbb{R}_{\ge 0} \\
+    \nonumber
+    T \in \{ T_0^l, T_1^l, T_2^l, \hdots | T_j^l \ge t  \} \\
+    \nonumber
+    \sigma_i^l : \mathbb{R}_{\ge 0} \rightarrow \mathbb{R} \\
+    \nonumber
+    l \in [1, m]
+\end{align}
+
+Where $z_i^l(t)$ follow correlated Wiener processes with correlation $\rho_{i, j}^{x, y}$, i.e.
+
+\begin{equation}
+    \mathbb{E}[dz_i^x(t)dz_j^y(t)] = \rho_{i, j}^{x, y}dt
+\end{equation}
+
+$F(t, T_j)^l$ is the forward price observed at time $t$, for delivery over the time 
+interval $[T_j, T_{j+1})$ of the $l^{\text{th}}$ of $m$ commodity underlyings.
+
+
+\section{Critique of Three Factor Seasonal Model}
+The strength of the three-factor seasonal model is it's parsimony. 
+Being able to specify the gas price dynamics using only four parameters is of great help
+in allowing users to intuitively see what is driving the extrinsic value of gas storage
+being valued. Traders can easily adjust the input
+parameters based on their view of the market. For example if a trader take a view that 
+the future summer-winter spread volatility is going to be higher than in the historical
+period used to calibrate the parameters they can easily bump up the seasonal volatility
+parameter when valuing a potential storage deal. For a non-parsimonious model with many parameters
+some of which are completely abstract (for example correlation between factors), such
+usage would not be practical.
+
+Another example of the is that risk managers can 
+create scenario matrices containing storage facility (or portfolio) P\&L based on scenarios 
+applied to any of the four parameters. 
+
+% Quote Taleb and compare to Black-Scholes as a parameterisation?
+
+It also allows for a relatively simple and intuitive way of calibrating
+model parameters from historic spot and forward prices.
+% TODO cite other Kyos paper
+The KyStore product is clearly a popular one and The Author believes that this is at least partially due 
+to the parsimony of the underlying price process model.
+
+\bigskip
+The big downside of this model is that the forward volatility structure implied is completely unrealistic.
+It is well known that the 
+
+
+\bibliographystyle{plainnat}
+\bibliography{three_factor_seasonal_model}
+
+\end{document}
