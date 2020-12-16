@@ -57,6 +57,34 @@ Where $z_i^l(t)$ follow correlated Wiener processes with correlation $\rho_{i, j
 $F(t, T_j)^l$ is the forward price observed at time $t$, for delivery over the time 
 interval $[T_j, T_{j+1})$ of the $l^{\text{th}}$ of $m$ commodity underlyings.
 
+\section{Three Factor Seasonal Form}
+The three factor seasonal parameters clearly has parameter $n=3$. The first factor is
+the spot or short-term factor. For this factor there is a constant volatity and mean
+reversion, i.e. $\sigma_1(T) = \sigma_{spot}$ and as this is the only factor with
+non-zero mean reversion $\alpha_1 = \alpha$. This factor has the heuristic interpretation
+as random shocks which move the forward curve in an exponentially decaying (as function of
+time to maturity) manner, with the biggest effect being on the spot price. It can also % TODO reference clewlow strickland for SDE of spot price
+be interpreted as driving random shocks to the spot price which then mean revert.
+
+As mentioned above the remaining two factors have zero mean reversion, i.e. 
+$\alpha_2 = \alpha_3 = 0$. TODO seasonal factor 
+
+The third factor, the long-term factor, has constant volatility, $\sigma_2 = \sigma_{long}$,
+and represents parallel movement which effect the whole forward curve in a maturity 
+independent manner.
+
+Finally, it is assumed that the three Brownian Motions are independent. Putting this 
+together, and using the subscripts $spot$, $seas$ and $long$ the Brownian Motions
+of the spot, seasonal, and long-term factors we get the following.
+
+\begin{equation}
+    \frac{dF(t, T)}{F(t, T)}= \sigma_{spot} e^{-\alpha(T - t)} dz_{spot}(t) + \\
+        \sigma_{seas}(T) dz_{seas}(t) + \sigma_{long} dz_{long}(t)
+\end{equation}
+
+Refer back to \cite{Fowler} for the statistical properties of the forward and spot
+price assumed by just substituting the parameters in \cite{Fowler} with the specific
+one given above.
 
 \section{Critique of Three Factor Seasonal Model}
 The strength of the three-factor seasonal model is it's parsimony. 
@@ -77,7 +105,18 @@ applied to any of the four parameters.
 % Quote Taleb and compare to Black-Scholes as a parameterisation?
 
 It also allows for a relatively simple and intuitive way of calibrating
-model parameters from historic spot and forward prices.
+model parameters from historic spot and forward prices. This is of particular importance
+for gas storage where there is generally a lack of liquid traded instruments which can be used
+to calibrate model volatility and correlation parameters to
+\footnote[1]{For many natural gas markets, there are European options traded, for which the
+implied volatility can be used to calibrate price dynamics. However, the extrinsic value
+of storage is mostly derived from the relative movement of different delivery points
+on the forward curve, i.e. by calendar spreads. The European option volatility curve
+does convey some information about calendar spread volatility (e.g. a big difference
+in implied vol for two forward contracts implies that one contract will move by much
+more than another, hence higher calendar spread volatility) but not enough to fully 
+calibrate the joint price dynamics of the whole forward curve.}.
+
 % TODO cite other Kyos paper
 The KyStore product is clearly a popular one and The Author believes that this is at least partially due 
 to the parsimony of the underlying price process model.
